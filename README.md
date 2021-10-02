@@ -1,3 +1,10 @@
+# @nativescript/\* plugins
+
+```
+npm run setup
+npm start
+```
+
 - [@nativescript/apple-pay](packages/apple-pay/README.md)
 - [@nativescript/google-pay](packages/google-pay/README.md)
 - [@nativescript/payments](packages/payments/README.md)
