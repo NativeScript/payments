@@ -1,0 +1,13 @@
+{
+  "main": "./src/main.ts",
+  "dependencies": {
+    "@nativescript/core": "file:../../node_modules/@nativescript/core",
+    "@nativescript/payments": "file:../../dist/packages/payments",
+    "@nativescript/google-pay": "file:../../dist/packages/google-pay",
+    "@nativescript/apple-pay": "file:../../dist/packages/apple-pay"
+  },
+  "devDependencies": {
+    "@nativescript/android": "~8.1.1",
+    "@nativescript/ios": "~8.1.0"
+  }
+}

@@ -1,0 +1,47 @@
+{
+    "name": "@nativescript/payments",
+    "version": "1.0.0",
+    "description": "In-App Purchase and Subscriptions for NativeScript",
+    "main": "index",
+    "typings": "index.d.ts",
+    "nativescript": {
+        "platforms": {
+            "ios": "6.0.0",
+            "android": "6.0.0"
+        }
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/NativeScript/plugins.git"
+    },
+    "keywords": [
+        "NativeScript",
+        "JavaScript",
+        "Android",
+        "iOS",
+        "iap",
+        "iab",
+        "in-app purchase",
+        "in-app billing",
+        "vending",
+        "payment",
+        "subscription"
+    ],
+    "author": {
+        "name": "NativeScript",
+        "email": "oss@nativescript.org"
+    },
+    "contributors": [
+        {
+            "name": "Dick Smith",
+            "email": "github@dicksmith.com"
+        }
+    ],
+    "bugs": {
+        "url": "https://github.com/NativeScript/plugins/issues"
+    },
+    "license": "Apache-2.0",
+    "homepage": "https://github.com/NativeScript/plugins",
+    "readmeFilename": "README.md",
+    "bootstrapper": "@nativescript/plugin-seed"
+}

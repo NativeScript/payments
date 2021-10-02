@@ -1,0 +1,40 @@
+{
+  "npmScope": "nativescript",
+  "affected": {
+    "defaultBase": "master"
+  },
+  "implicitDependencies": {
+    "workspace.json": "*",
+    "package.json": {
+      "dependencies": "*",
+      "devDependencies": "*"
+    },
+    "tsconfig.base.json": "*",
+    "tslint.json": "*",
+    "nx.json": "*"
+  },
+  "projects": {
+    "demo": {
+      "tags": []
+    },
+    "demo-angular": {
+      "tags": []
+    },
+    "all": {
+      "tags": []
+    },
+    "payments": {
+      "tags": []
+    },
+    "google-pay": {
+      "tags": []
+    },
+    "apple-pay": {
+      "tags": []
+    }
+  },
+  "workspaceLayout": {
+    "appsDir": "apps",
+    "libsDir": "packages"
+  }
+}
