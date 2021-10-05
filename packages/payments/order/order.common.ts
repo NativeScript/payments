@@ -15,7 +15,8 @@ export abstract class BaseOrder {
   /** Android only */
   public isSubscription: boolean;
   public dataSignature: string;
-  public acknowledged: boolean | null;
+  public acknowledged: boolean;
+  public quantity: number;
 
   constructor(nativeValue: Purchase | PurchaseHistoryRecord | SKPaymentTransaction, restored: boolean = false) {
     this.nativeValue = nativeValue;

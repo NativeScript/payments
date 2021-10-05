@@ -3,7 +3,7 @@ import { Application as TnsApplication } from '@nativescript/core';
 import { Failure } from './failure';
 import { Item } from './item';
 import { Order, OrderState } from './order';
-import { _payments$, EventContext, EventResult, PaymentEvent } from './common';
+import { _payments$, PaymentEvent } from './common';
 export * from './failure';
 export * from './item';
 export * from './order';
@@ -13,6 +13,7 @@ type List<T> = java.util.List<T>;
 type Context = android.content.Context;
 // android billing
 type Purchase = com.android.billingclient.api.Purchase;
+type PurchaseHistoryRecord = com.android.billingclient.api.PurchaseHistoryRecord;
 type BillingClient = com.android.billingclient.api.BillingClient;
 type SkuDetails = com.android.billingclient.api.SkuDetails;
 type PurchasesResult = com.android.billingclient.api.Purchase.PurchasesResult;
@@ -50,42 +51,12 @@ export function init(): void {
             const resultCode = result.getResponseCode();
             if (_billingClient) {
               if (resultCode === com.android.billingclient.api.BillingClient.BillingResponseCode.OK) {
-                _billingClient.queryPurchaseHistoryAsync(
-                  com.android.billingclient.api.BillingClient.SkuType.INAPP,
-                  new com.android.billingclient.api.PurchaseHistoryResponseListener({
-                    onPurchaseHistoryResponse: (historyResult, purchaseList) => {
-                      const responseCode = historyResult.getResponseCode();
-                      _purchaseHandler(
-                        responseCode,
-                        purchaseList,
-                        com.android.billingclient.api.BillingClient.SkuType.INAPP,
-                      );
-                      _payments$.next({
-                        context: PaymentEvent.Context.CONNECTING_STORE,
-                        result: PaymentEvent.Result.SUCCESS,
-                        payload: null,
-                      });
-                    },
-                  }),
-                );
-                _billingClient.queryPurchaseHistoryAsync(
-                  com.android.billingclient.api.BillingClient.SkuType.SUBS,
-                  new com.android.billingclient.api.PurchaseHistoryResponseListener({
-                    onPurchaseHistoryResponse: (historyResult, purchaseList) => {
-                      const responseCode = historyResult.getResponseCode();
-                      _purchaseHandler(
-                        responseCode,
-                        purchaseList,
-                        com.android.billingclient.api.BillingClient.SkuType.SUBS,
-                      );
-                      _payments$.next({
-                        context: PaymentEvent.Context.CONNECTING_STORE,
-                        result: PaymentEvent.Result.SUCCESS,
-                        payload: null,
-                      });
-                    },
-                  }),
-                );
+                // maybe automatically restore orders?
+                _payments$.next({
+                  context: PaymentEvent.Context.CONNECTING_STORE,
+                  result: PaymentEvent.Result.SUCCESS,
+                  payload: null,
+                });
               } else {
                 console.error(new Error('Init failed with code: ' + resultCode));
                 _payments$.next({
@@ -386,7 +357,7 @@ export function canMakePayments(/*types*/): boolean {
   return true; // TODO isReady?
 }
 
-function _purchaseHandler(responseCode: number, purchases: List<Purchase>, skuType?: string) {
+function _purchaseHandler(responseCode: number, purchases: List<Purchase | PurchaseHistoryRecord>, skuType?: string) {
   if (_billingClient) {
     let pending = purchases;
     if (!skuType) {
@@ -403,7 +374,7 @@ function _purchaseHandler(responseCode: number, purchases: List<Purchase>, skuTy
     if (responseCode === com.android.billingclient.api.BillingClient.BillingResponseCode.OK) {
       if (purchases && purchases.size()) {
         for (let i = 0; i < purchases.size(); i++) {
-          const purchase: com.android.billingclient.api.Purchase = purchases.get(i);
+          const purchase: Purchase | PurchaseHistoryRecord = purchases.get(i);
           if (purchase) {
             const order = new Order(purchase, false);
             // order.isSubscription = isSubscription;
