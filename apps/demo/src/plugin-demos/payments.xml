@@ -10,9 +10,9 @@
         <Label text="Items:" textWrap="true" fontSize="22" />
         <ListView height="300" items="{{ items }}" itemTap="{{ onItemTap }}">
           <ListView.itemTemplate>
-            <GridLayout rows="*" columns="auto, auto" paddingTop="10" paddingBottom="10">
-              <Label col="0" text="{{ localizedTitle + ' - ' }}" textWrap="true" />
-              <Label col="1" text="{{ priceFormatted }}" textWrap="true" />
+            <GridLayout rows="*, *" columns="*" paddingTop="10" paddingBottom="10">
+              <Label col="0" text="{{ localizedTitle }}" textWrap="true" />
+              <Label row="1" text="{{ priceFormatted }}" textWrap="true" />
             </GridLayout>
           </ListView.itemTemplate>
         </ListView>

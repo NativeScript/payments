@@ -10,6 +10,7 @@ export * from './item';
 export * from './order';
 
 let _billingClient: com.android.billingclient.api.BillingClient | null;
+let _isBillingAvailable: boolean;
 
 export function init(): void {
 	if (!_billingClient) {
@@ -40,6 +41,8 @@ export function init(): void {
 						const resultCode = result.getResponseCode();
 						if (_billingClient) {
 							if (resultCode === com.android.billingclient.api.BillingClient.BillingResponseCode.OK) {
+								// use this boolean so the user can call `canMakePayments()`
+								_isBillingAvailable = true;
 								_billingClient.queryPurchaseHistoryAsync(
 									com.android.billingclient.api.BillingClient.SkuType.INAPP,
 									new com.android.billingclient.api.PurchaseHistoryResponseListener({
@@ -69,7 +72,13 @@ export function init(): void {
 									})
 								);
 							} else {
-								console.error(new Error('Init failed with code: ' + resultCode));
+								const code = _mapBillingResponseCode(resultCode);
+								console.log(new Error(`🛑 In App Billing Response Error Code: ${resultCode} - ${code}`));
+								if (resultCode === com.android.billingclient.api.BillingClient.BillingResponseCode.BILLING_UNAVAILABLE) {
+									console.log('The device you are testing on may not have Google Play setup.');
+								}
+								// use this boolean so the user can call `canMakePayments()`
+								_isBillingAvailable = false;
 								_payments$.next({
 									context: PaymentEvent.Context.CONNECTING_STORE,
 									result: PaymentEvent.Result.FAILURE,
@@ -114,10 +123,12 @@ export function fetchProducts(itemIds: Array<string>, skuType: string) {
 			result: PaymentEvent.Result.STARTED,
 			payload: itemIds,
 		});
+
 		const skuList = new java.util.ArrayList();
 		itemIds.forEach((value) => {
 			return skuList.add(value);
 		});
+
 		const params = com.android.billingclient.api.SkuDetailsParams.newBuilder();
 		params.setSkusList(skuList).setType(skuType);
 		_billingClient.querySkuDetailsAsync(
@@ -136,6 +147,8 @@ export function fetchProducts(itemIds: Array<string>, skuType: string) {
 							payload: products,
 						});
 					} else {
+						const code = _mapBillingResponseCode(responseCode);
+						console.log(new Error(`Failed to fetch products for purchase: ${responseCode} - ${code}`));
 						_payments$.next({
 							context: PaymentEvent.Context.RETRIEVING_ITEMS,
 							result: PaymentEvent.Result.FAILURE,
@@ -360,7 +373,12 @@ export function restoreOrders(skuType?: string): void {
 }
 
 export function canMakePayments(/*types*/): boolean {
-	return true; // TODO isReady?
+	if (_billingClient) {
+		return _isBillingAvailable;
+	} else {
+		console.log('🛑 Call `init` prior to checking if the payments are configured correctly. 🛑');
+		return false;
+	}
 }
 
 function _purchaseHandler(responseCode: number, purchases: java.util.List<com.android.billingclient.api.Purchase>, skuType?: string) {
@@ -399,5 +417,46 @@ function _purchaseHandler(responseCode: number, purchases: java.util.List<com.an
 		}
 	} else {
 		console.error(new Error('BillingClient missing.'));
+	}
+}
+
+function _mapBillingResponseCode(code: number) {
+	switch (code) {
+		case 0:
+			return 'OK';
+		case 1:
+			return 'USER_CANCELED';
+
+		case 2:
+			return 'SERVICE_UNAVAILABLE';
+
+		case 3:
+			return 'BILLING_UNAVAILABLE';
+
+		case 4:
+			return 'ITEM_UNAVAILABLE';
+
+		case 5:
+			return 'DEVELOPER_ERROR';
+
+		case 6:
+			return 'ERROR';
+
+		case 7:
+			return 'ITEM_ALREADY_OWNED';
+
+		case 8:
+			return 'ITEM_NOT_OWNED';
+
+		case -1:
+			return 'SERVICE_DISCONNECTED';
+
+		case -2:
+			return 'FEATURE_NOT_SUPPORTED';
+
+		case -3:
+			return 'SERVICE_TIMEOUT';
+		default:
+			return '';
 	}
 }

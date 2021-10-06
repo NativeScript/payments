@@ -32,12 +32,18 @@ Once you have uploaded one aab to the console for your app you can create in app
 ![Create new in app products](../../assets/images/android-payments1.png)
 
 On the form to create your product, the `Product ID` is the value you will use to fetch your products for the user to purchase.
+
+**Important Tip for Google Products**
+Google does not like numeric values in the ID field. It seems to ignore the Sku when querying for your items and only returns one item instead of multiple values if the IDs contain numeric values.
+
 ![Product ID Form](../../assets/images/android-payments2.png)
 
 Once you complete an item you will see a list of all items for the app listed on the console.
 ![List of Products](../../assets/images/android-payments3.png)
+To test Android purchases completely, you should use a real device with Google Play setup and logged into an account. You can use [test accounts
+for Google Play Billing](https://developer.android.com/google/play/billing/test) for the work flow. This will allow you to test the app in development properly. For more info: https://support.google.com/googleplay/android-developer/answer/6062777
 
-** Note **
+**Note about the plugin usage:**
 This plugin uses a RxJS Observable to emit the events to handle the purchase flow. To avoid threading errors with the platform purchasing flow, you can use `toMainThread()` as a pipe on the Observable so that the purchase logic executes on the main thread. `payments$.pipe(toMainThread()).subscribe((event: PaymentEvent.Type) => {...`
 The sample below should give a good starting point on how to use the Observable and setup the purchasing mechanism.
 

@@ -29,11 +29,24 @@ export class DemoModel extends Observable {
 		payments$.pipe(toMainThread()).subscribe((event: PaymentEvent.Type) => {
 			switch (event.context) {
 				case PaymentEvent.Context.CONNECTING_STORE:
-					console.log('Store Status: ' + event.result);
+					if (event.result === PaymentEvent.Result.SUCCESS) {
+						if (!this._isPaymentSystemInitialized) {
+							console.log('🟢 Initialized In App Purchase Payments 🟢');
+							const canPay = canMakePayments();
+							console.log(`${canPay ? '🟢 Can Make Payments 🟢' : '🛑 Unable to make payments 🛑'}`);
+
+							if (canPay) {
+								fetchItems(['io.nstudio.iapdemo.coinsone', 'io.nstudio.iapdemo.coinsfive']);
+								// fetchSubscriptions(['io.nstudio.iapdemo.monthly_subscription']);
+							}
+							this._isPaymentSystemInitialized = true;
+						}
+					}
 					break;
 				case PaymentEvent.Context.RETRIEVING_ITEMS:
 					console.log('RETRIEVING_ITEMS STATUS: ' + event.result);
 					if (event.result === PaymentEvent.Result.SUCCESS) {
+						console.log(event)
 						this.items = new ObservableArray(event.payload);
 						console.log(`🟢 Got ${this.items.length} In App Purchase Items 🟢`);
 					}
@@ -41,7 +54,7 @@ export class DemoModel extends Observable {
 				case PaymentEvent.Context.PROCESSING_ORDER:
 					// console.log(event);
 					if (event.result === PaymentEvent.Result.FAILURE) {
-						console.log(`🛑 Payment Failure - ${event.payload.description} 🛑`);
+						console.log(`🛑 Payment Failure - ${event.payload.description} ${event.payload.nativeCode} ${event.payload.type} 🛑`);
 						this._inPurchaseFlow = false;
 					} else if (event.result === PaymentEvent.Result.SUCCESS) {
 						console.log('🟢 Payment Success 🟢');
@@ -66,16 +79,8 @@ export class DemoModel extends Observable {
 			}
 		});
 
-		const canPay = canMakePayments();
-		console.log(`${canPay ? '🟢 Can Make Payments 🟢' : '🛑 Unable to make payments 🛑'}`);
-
 		// Here we initialize the payment system
 		initPayments();
-		console.log('🟢 Initialized In App Purchase Payments 🟢');
-
-		fetchItems(['io.nstudio.iapdemo.nonconsumable', 'io.nstudio.iapdemo.coins_100']);
-		// fetchSubscriptions(['io.nstudio.iapdemo.monthly_subscription']);
-		this._isPaymentSystemInitialized = true;
 	}
 
 	// The event will be raise when an item inside the ListView is tapped.
@@ -84,7 +89,7 @@ export class DemoModel extends Observable {
 
 		this._inPurchaseFlow = true;
 		const opts: BuyItemOptions = {
-			accountUserName: 'someuseraccount123@test.orgbizfree',
+			// accountUserName: 'bradwaynemartin@gmail.com',
 			ios: {
 				quantity: 1,
 			},
