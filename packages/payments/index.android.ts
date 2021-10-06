@@ -4,7 +4,7 @@ import { Failure } from './failure';
 import { Item } from './item';
 import { Order, OrderState } from './order';
 
-export { PaymentEvent, payments$ } from './common';
+export { PaymentEvent, payments$, toMainThread } from './common';
 export * from './failure';
 export * from './item';
 export * from './order';
