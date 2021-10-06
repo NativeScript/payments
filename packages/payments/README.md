@@ -4,10 +4,6 @@
 ns plugin add @nativescript/payments
 ```
 
-** Note **
-This plugin uses a RxJS Observable to emit the events to handle the purchase flow. To avoid threading errors with the platform purchasing flow, you can use `toMainThread()` as a pipe on the Observable so that the purchase logic executes on the main thread. `payments$.pipe(toMainThread()).subscribe((event: PaymentEvent.Type) => {...`
-The sample below should give a good starting point on how to use the Observable and setup the purchasing mechanism.
-
 ## Prerequisites
 
 Before you get started, review the following prerequisites:
@@ -16,11 +12,34 @@ Before you get started, review the following prerequisites:
 
 To offer in app purchases for your iOS app. You will need to create items for the app on [AppStoreConnect.Apple.Com](https://appstoreconnect.apple.com).
 
-![App Store App In App Purchase Items](../../assets/images/ios-app-items.png)
+![In App Purchase Step One](../../assets/images/ios-payments1.png)
+
+On the form to create the in app purchase item, the `Product ID` is the value you will use to fetch your items for the user to purchase in your app.
+![Product ID Form Apple](../../assets/images/ios-payments2.png)
+
+Once you complete an item you will see a list of all items for the app listed on the AppStore Connect.
+![List of IAP Items](../../assets/images/ios-payments3.png)
 
 To test iOS purchases fully, you will need a real iOS device. You will also need a [test user in the sandbox environment](https://appstoreconnect.apple.com/access/testers) on your appstore account.
 
 ![Sandbox Testers](../../assets/images/sandbox-testers.png)
+
+### Google (Android)
+
+To offer in app purchases for your Android app you will need to upload at least ONE apk/aab to the [Google Play Console](https://play.google.com).
+
+Once you have uploaded one aab to the console for your app you can create in app products on the console.
+![Create new in app products](../../assets/images/android-payments1.png)
+
+On the form to create your product, the `Product ID` is the value you will use to fetch your products for the user to purchase.
+![Product ID Form](../../assets/images/android-payments2.png)
+
+Once you complete an item you will see a list of all items for the app listed on the console.
+![List of Products](../../assets/images/android-payments3.png)
+
+** Note **
+This plugin uses a RxJS Observable to emit the events to handle the purchase flow. To avoid threading errors with the platform purchasing flow, you can use `toMainThread()` as a pipe on the Observable so that the purchase logic executes on the main thread. `payments$.pipe(toMainThread()).subscribe((event: PaymentEvent.Type) => {...`
+The sample below should give a good starting point on how to use the Observable and setup the purchasing mechanism.
 
 ## Usage
 
