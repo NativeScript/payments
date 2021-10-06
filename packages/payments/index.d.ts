@@ -1,7 +1,10 @@
+import { BuyItemOptions } from './common';
 import { Item } from './item';
 import { Order } from './order';
 
-export { EventContext, EventResult, IPaymentEvent, payments$, PaymentEvent } from './payments.common';
+export { BuyItemOptions, PaymentEvent, payments$ } from './common';
+export * from './item';
+export * from './order';
 
 export declare function init(): void;
 
@@ -9,7 +12,7 @@ export declare function tearDown(): void;
 
 export declare function fetchItems(itemIds: Array<string>): void;
 
-export declare function buyItem(item: Item, userData?: string): void;
+export declare function buyItem(item: Item, options?: BuyItemOptions): void;
 
 export function fetchSubscriptions(itemIds: Array<string>): void;
 
