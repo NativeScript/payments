@@ -1,4 +1,3 @@
-import { Utils } from '@nativescript/core';
 import { BuyItemOptions, PaymentEvent, _payments$ } from './common';
 import { Failure } from './failure';
 import { Item } from './item';
@@ -187,12 +186,10 @@ class SKProductRequestDelegateImpl extends NSObject implements SKProductsRequest
 			result.push(new Item(products.objectAtIndex(i)));
 		}
 
-		Utils.executeOnMainThread(() => {
-			_payments$.next({
-				context: PaymentEvent.Context.RETRIEVING_ITEMS,
-				result: PaymentEvent.Result.SUCCESS,
-				payload: result,
-			});
+		_payments$.next({
+			context: PaymentEvent.Context.RETRIEVING_ITEMS,
+			result: PaymentEvent.Result.SUCCESS,
+			payload: result,
 		});
 
 		this._cleanup();

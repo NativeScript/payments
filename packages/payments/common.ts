@@ -1,8 +1,20 @@
-import { ConnectableObservable, ReplaySubject } from 'rxjs';
+import { Utils } from '@nativescript/core';
+import { ConnectableObservable, Observable, ReplaySubject } from 'rxjs';
 import { publish } from 'rxjs/operators';
 import { Failure } from './failure';
 import { Item } from './item';
 import { Order } from './order';
+
+export function toMainThread() {
+	return <T>(source: Observable<T>) =>
+		new Observable<T>((observer) =>
+			source.subscribe({
+				next: (x) => Utils.executeOnMainThread(() => observer.next(x)),
+				error: (err) => Utils.executeOnMainThread(() => observer.error(err)),
+				complete: () => Utils.executeOnMainThread(() => observer.complete()),
+			})
+		);
+}
 
 export namespace PaymentEvent {
 	export enum Context {

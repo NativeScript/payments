@@ -24,5 +24,7 @@ export declare function restoreOrders(skuType?: string): void;
 
 export declare function canMakePayments(): boolean;
 
+export function toMainThread();
+
 // TODO Manage subscriptions
 // TODO map subscriptions (Android)

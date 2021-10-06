@@ -1,5 +1,5 @@
 import { EventData, ItemEventData, Observable, ObservableArray, Page } from '@nativescript/core';
-import { buyItem, BuyItemOptions, canMakePayments, fetchItems, finalizeOrder, init as initPayments, Item, PaymentEvent, payments$ } from '@nativescript/payments';
+import { buyItem, BuyItemOptions, canMakePayments, fetchItems, finalizeOrder, init as initPayments, Item, PaymentEvent, payments$, toMainThread } from '@nativescript/payments';
 import { ObservableProperty } from '../obs-prop';
 
 let subscription;
@@ -26,7 +26,7 @@ export class DemoModel extends Observable {
 
 		// Subscribe the Handlers
 		subscription = payments$.connect();
-		payments$.subscribe((event: PaymentEvent.Type) => {
+		payments$.pipe(toMainThread()).subscribe((event: PaymentEvent.Type) => {
 			switch (event.context) {
 				case PaymentEvent.Context.CONNECTING_STORE:
 					console.log('Store Status: ' + event.result);
@@ -73,17 +73,15 @@ export class DemoModel extends Observable {
 		initPayments();
 		console.log('🟢 Initialized In App Purchase Payments 🟢');
 
-		if (global.isIOS) {
-			fetchItems(['io.nstudio.iapdemo.nonconsumable', 'io.nstudio.iapdemo.coins_100']);
-			// fetchSubscriptions(['io.nstudio.iapdemo.monthly_subscription']);
-		}
+		fetchItems(['io.nstudio.iapdemo.nonconsumable', 'io.nstudio.iapdemo.coins_100']);
+		// fetchSubscriptions(['io.nstudio.iapdemo.monthly_subscription']);
 		this._isPaymentSystemInitialized = true;
 	}
 
 	// The event will be raise when an item inside the ListView is tapped.
 	onItemTap(args: ItemEventData) {
 		const item = this.items.getItem(args.index);
-		
+
 		this._inPurchaseFlow = true;
 		const opts: BuyItemOptions = {
 			accountUserName: 'someuseraccount123@test.orgbizfree',
