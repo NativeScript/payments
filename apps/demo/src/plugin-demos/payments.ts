@@ -36,7 +36,7 @@ export class DemoModel extends Observable {
 							console.log(`${canPay ? '🟢 Can Make Payments 🟢' : '🛑 Unable to make payments 🛑'}`);
 
 							if (canPay) {
-								fetchItems(['io.nstudio.iapdemo.coinsone', 'io.nstudio.iapdemo.coinsfive']);
+								fetchItems(['io.nstudio.iapdemo.coinsfive', 'io.nstudio.iapdemo.coinsone', 'io.nstudio.iapdemo.coinsonethousand']);
 								// fetchSubscriptions(['io.nstudio.iapdemo.monthly_subscription']);
 							}
 							this._isPaymentSystemInitialized = true;
@@ -46,7 +46,7 @@ export class DemoModel extends Observable {
 				case PaymentEvent.Context.RETRIEVING_ITEMS:
 					console.log('RETRIEVING_ITEMS STATUS: ' + event.result);
 					if (event.result === PaymentEvent.Result.SUCCESS) {
-						console.log(event)
+						console.log(event);
 						this.items = new ObservableArray(event.payload);
 						console.log(`🟢 Got ${this.items.length} In App Purchase Items 🟢`);
 					}
