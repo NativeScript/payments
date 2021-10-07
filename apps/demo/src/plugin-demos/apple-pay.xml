@@ -1,14 +1,19 @@
-<Page xmlns="http://schemas.nativescript.org/tns.xsd" navigatingTo="navigatingTo" class="page">
-    <Page.actionBar>
-        <ActionBar title="apple-pay" icon="" class="action-bar">
-        </ActionBar>
-    </Page.actionBar>
-    <StackLayout class="p-20">
-        <ScrollView class="h-full">
-          <StackLayout>
-            <Button text="Test apple-pay" tap="{{ testIt }}" class="btn btn-primary"/>
-
-          </StackLayout>
-        </ScrollView>
-    </StackLayout>
+<Page xmlns="http://schemas.nativescript.org/tns.xsd"
+  xmlns:ApplePayBtn="@nativescript/apple-pay" navigatingTo="navigatingTo" class="page">
+  <Page.actionBar>
+    <ActionBar title="Apple-Pay" icon="" class="action-bar">
+    </ActionBar>
+  </Page.actionBar>
+  <StackLayout class="p-20" height="100%">
+    <ScrollView class="h-full" height="100%">
+      <StackLayout>
+        <ios>
+          <ApplePayBtn tap="{{ onApplePayTap }}" buttonType="InStore"></ApplePayBtn>
+        </ios>
+        <android>
+          <Label text="You cannot test Apple Pay on Android devices." textWrap="true" />
+        </android>
+      </StackLayout>
+    </ScrollView>
+  </StackLayout>
 </Page>

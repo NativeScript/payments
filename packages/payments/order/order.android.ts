@@ -6,45 +6,45 @@ type PurchaseHistoryRecord = com.android.billingclient.api.PurchaseHistoryRecord
 export { OrderState } from './order.common';
 
 export class Order extends BaseOrder {
-  public nativeValue: Purchase;
+	public nativeValue: Purchase;
 
-  constructor(nativeValue: Purchase | PurchaseHistoryRecord, restored: boolean = false) {
-    super(nativeValue, restored);
+	constructor(nativeValue: Purchase | PurchaseHistoryRecord, restored: boolean = false) {
+		super(nativeValue, restored);
 
-    const jsonObject: any = JSON.parse(nativeValue.getOriginalJson());
-    // TODO: treat multiple SKUs
-    this.itemId = nativeValue.getSkus().get(0) as string;
-    this.receiptToken = nativeValue.getPurchaseToken();
-    this.dataSignature = nativeValue.getSignature();
-    this.orderId = 'getOrderId' in nativeValue ? nativeValue.getOrderId() : null;
-    this.userData = jsonObject.developerPayload;
-    this.isSubscription = jsonObject.autoRenewing;
-    this.orderDate = new Date(nativeValue.getPurchaseTime());
-    this.acknowledged = 'isAcknowledged' in nativeValue ? nativeValue.isAcknowledged() : null;
-    if (typeof jsonObject.purchaseState !== 'undefined') {
-      // console.log('jsonObject.purchaseState:', jsonObject.purchaseState);
-      switch (jsonObject.purchaseState) {
-        case 0:
-          this.state = OrderState.VALID;
-          break;
-        case 1:
-        case 2:
-        default:
-          if (this.isSubscription) {
-            // for now try this:
-            this.state = OrderState.VALID;
-          } else {
-            this.state = OrderState.INVALID;
-          }
-          break;
-      }
-    } else {
-      // force it to be processed and consumed so it doesn't get stuck
-      this.state = OrderState.VALID;
-    }
-  }
+		const jsonObject: any = JSON.parse(nativeValue.getOriginalJson());
+		// TODO: treat multiple SKUs
+		this.itemId = nativeValue.getSkus().get(0) as string;
+		this.receiptToken = nativeValue.getPurchaseToken();
+		this.dataSignature = nativeValue.getSignature();
+		this.orderId = 'getOrderId' in nativeValue ? nativeValue.getOrderId() : null;
+		this.userData = jsonObject.developerPayload;
+		this.isSubscription = jsonObject.autoRenewing;
+		this.orderDate = new Date(nativeValue.getPurchaseTime());
+		this.acknowledged = 'isAcknowledged' in nativeValue ? nativeValue.isAcknowledged() : null;
+		if (typeof jsonObject.purchaseState !== 'undefined') {
+			// console.log('jsonObject.purchaseState:', jsonObject.purchaseState);
+			switch (jsonObject.purchaseState) {
+				case 0:
+					this.state = OrderState.VALID;
+					break;
+				case 1:
+				case 2:
+				default:
+					if (this.isSubscription) {
+						// for now try this:
+						this.state = OrderState.VALID;
+					} else {
+						this.state = OrderState.INVALID;
+					}
+					break;
+			}
+		} else {
+			// force it to be processed and consumed so it doesn't get stuck
+			this.state = OrderState.VALID;
+		}
+	}
 
-  get debug(): string {
-    return this.nativeValue.getOriginalJson();
-  }
+	get debug(): string {
+		return this.nativeValue.getOriginalJson();
+	}
 }
