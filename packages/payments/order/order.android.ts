@@ -6,10 +6,10 @@ type PurchaseHistoryRecord = com.android.billingclient.api.PurchaseHistoryRecord
 export { OrderState } from './order.common';
 
 export class Order extends BaseOrder {
-  public nativeValue: Purchase;
+	public nativeValue: Purchase;
 
-  constructor(nativeValue: Purchase | PurchaseHistoryRecord, restored: boolean = false) {
-    super(nativeValue, restored);
+	constructor(nativeValue: Purchase | PurchaseHistoryRecord, restored: boolean = false) {
+		super(nativeValue, restored);
 
     const jsonObject: any = JSON.parse(nativeValue.getOriginalJson());
     // TODO: treat multiple SKUs
@@ -50,7 +50,7 @@ export class Order extends BaseOrder {
     }
   }
 
-  get debug(): string {
-    return this.nativeValue.getOriginalJson();
-  }
+	get debug(): string {
+		return this.nativeValue.getOriginalJson();
+	}
 }

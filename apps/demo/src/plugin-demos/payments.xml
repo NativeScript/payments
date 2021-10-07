@@ -1,14 +1,36 @@
-<Page xmlns="http://schemas.nativescript.org/tns.xsd" navigatingTo="navigatingTo" class="page">
-    <Page.actionBar>
-        <ActionBar title="payments" icon="" class="action-bar">
-        </ActionBar>
-    </Page.actionBar>
-    <StackLayout class="p-20">
-        <ScrollView class="h-full">
-          <StackLayout>
-            <Button text="Test payments" tap="{{ testIt }}" class="btn btn-primary"/>
+<Page xmlns="http://schemas.nativescript.org/tns.xsd" navigatedTo="navigatedTo" unloaded="unloaded">
+  <Page.actionBar>
+    <ActionBar title="Payments" icon="">
+    </ActionBar>
+  </Page.actionBar>
+  <StackLayout class="p-20" height="100%" width="100%">
+    <ScrollView class="h-full">
+      <StackLayout height="100%" width="100%">
 
-          </StackLayout>
-        </ScrollView>
-    </StackLayout>
+        <Label text="Items:" textWrap="true" fontSize="22" />
+        <ListView height="300" items="{{ items }}" itemTap="{{ onItemTap }}">
+          <ListView.itemTemplate>
+            <GridLayout rows="*, *" columns="*" paddingTop="10" paddingBottom="10">
+              <Label col="0" text="{{ localizedTitle }}" textWrap="true" />
+              <Label row="1" text="{{ priceFormatted }}" textWrap="true" />
+            </GridLayout>
+          </ListView.itemTemplate>
+        </ListView>
+
+        <!-- <StackLayout visibility="{{ subscriptions.length >= 1 ? 'visible' : 'collapsed' }}" paddingTop="10">
+          <Label text="Subscriptions:" textWrap="true" />
+          <ListView height="300" items="{{ subscriptions }}" itemTap="{{ onItemTap }}">
+            <ListView.itemTemplate>
+              <GridLayout rows="*" columns="auto, auto">
+                <Label col="0" text="{{ localizedTitle + ' - ' }}" textWrap="true"/>
+                <Label col="1" text="{{ priceFormatted }}" textWrap="true" />
+              </GridLayout>
+            </ListView.itemTemplate>
+          </ListView>
+        </StackLayout> -->
+
+
+      </StackLayout>
+    </ScrollView>
+  </StackLayout>
 </Page>

@@ -1,7 +1,7 @@
 import { NativeScriptConfig } from '@nativescript/core';
 
 export default {
-	id: 'org.nativescript.plugindemoangular',
+	id: 'io.nstudio.iapdemo',
 	appResourcesPath: '../../tools/assets/App_Resources',
 	android: {
 		v8Flags: '--expose_gc',
