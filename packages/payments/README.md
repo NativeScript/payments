@@ -62,17 +62,17 @@ payments$.connect();
 // Establish the Subscription with your event handling
 payments$.pipe(toMainThread()).subscribe((event: PaymentEvent.Type) => {...
 
-// fetchItems([]) will query the store for your items requested
-// you will handle these items inside the PaymentEvent.Context.RETRIEVING_ITEMS event
-fetchItems(['your.item.ids']);
+// fetchItems(['item.id', ...]) will query the store for the items requested.
+// Handle these items inside the PaymentEvent.Context.RETRIEVING_ITEMS event.
+fetchItems(['item.id']);
 
-// buyItem('') will start the purchase flow on Android & iOS
-// Now you will wait to handle the PaymentEvent.Context.RETRIEVING_ITEMS event
-// for SUCCESS or FAILURE
+// buyItem('item.id') will start the purchase flow on Android & iOS.
+// Next handle the PaymentEvent.Context.PROCESSING_ORDER for SUCCESS or FAILURE.
+// If SUCCESS then you can call the last method to the `finalizeOrder(payload)` method.
 buyItem('item.id');
 
-// finalizeOrder(payload) will complete the purchase flow, the payload argument here
-// is provided in the PaymentEvent.Context.PROCESSING_ORDER - SUCCESS event (see below example for detailed usage)
+// finalizeOrder(payload) will complete the purchase flow.
+// The payload argument here is provided in the PaymentEvent.Context.PROCESSING_ORDER - SUCCESS event (see below example for detailed usage).
 finalizeOrder(payload)
 
 // at this point you would process the order with your backend given the receiptToken from the purchase flow
