@@ -8,23 +8,29 @@ import { Application } from '@nativescript/core';
  * relevant to your implementation.
  */
 export class PaymentsUtil {
-	public static CENTS_IN_A_UNIT = new java.math.BigDecimal(100);
+  public static CENTS_IN_A_UNIT = new java.math.BigDecimal(100);
 
-	/**
-	 * Creates an instance of {@link PaymentsClient} for use in an {@link Activity} using the
-	 * environment and theme set in {@link Constants}.
-	 */
-	public static createPaymentsClient(environment, theme) {
-		const walletOptions = new com.google.android.gms.wallet.Wallet.WalletOptions.Builder().setEnvironment(environment).setTheme(theme).build();
-		return com.google.android.gms.wallet.Wallet.getPaymentsClient(Application.android.startActivity || Application.android.foregroundActivity, walletOptions);
-	}
+  /**
+   * Creates an instance of {@link PaymentsClient} for use in an {@link Activity} using the
+   * environment and theme set in {@link Constants}.
+   */
+  public static createPaymentsClient(environment, theme) {
+    const walletOptions = new com.google.android.gms.wallet.Wallet.WalletOptions.Builder()
+      .setEnvironment(environment)
+      .setTheme(theme)
+      .build();
+    return com.google.android.gms.wallet.Wallet.getPaymentsClient(Application.android.startActivity || Application.android.foregroundActivity, walletOptions);
+  }
 
-	/**
-	 * Converts cents to a string format accepted by {@link PaymentsUtil#getPaymentDataRequest}.
-	 *
-	 * @param cents value of the price in cents.
-	 */
-	public static centsToString(cents) {
-		return new java.math.BigDecimal(cents).divide(PaymentsUtil.CENTS_IN_A_UNIT, java.math.RoundingMode.HALF_EVEN).setScale(2, java.math.RoundingMode.HALF_EVEN).toString();
-	}
+  /**
+   * Converts cents to a string format accepted by {@link PaymentsUtil#getPaymentDataRequest}.
+   *
+   * @param cents value of the price in cents.
+   */
+  public static centsToString(cents) {
+    return new java.math.BigDecimal(cents)
+      .divide(PaymentsUtil.CENTS_IN_A_UNIT, java.math.RoundingMode.HALF_EVEN)
+      .setScale(2, java.math.RoundingMode.HALF_EVEN)
+      .toString();
+  }
 }

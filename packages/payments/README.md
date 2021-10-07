@@ -1,5 +1,7 @@
 # @nativescript/payments
 
+In-App Purchase and Subscriptions for NativeScript iOS and Android.
+
 ```bash
 ns plugin add @nativescript/payments
 ```
@@ -84,79 +86,79 @@ finalizeOrder(payload)
 import { buyItem, BuyItemOptions, fetchItems, finalizeOrder, init as initPayments, Item, PaymentEvent, payments$, toMainThread } from '@nativescript/payments';
 
 export class SomeViewModel {
-	private item: Item;
+  private item: Item;
 
-	pageLoaded() {
-		// Connect to the RxJS Observable
-		payments$.connect();
+  pageLoaded() {
+    // Connect to the RxJS Observable
+    payments$.connect();
 
-		// Subscribe to the RxJS Observable
-		// You do not have to handle all of the events
-		// RETRIEVING_ITEMS && PROCESSING_ORDER are the ones you'll want to use to handle the purchase flow
-		const subscription = payments$.pipe(toMainThread()).subscribe((event: PaymentEvent.Type) => {
-			switch (event.context) {
-				case PaymentEvent.Context.CONNECTING_STORE:
-					console.log('Store Status: ' + event.result);
-					if (event.result === PaymentEvent.Result.SUCCESS) {
-						const canPay = canMakePayments();
-						if (canPay) {
-							// pass in your product IDs here that you want to query for
-							fetchItems(['io.nstudio.iapdemo.coinsfive', 'io.nstudio.iapdemo.coinsone', 'io.nstudio.iapdemo.coinsonethousand']);
-						}
-					}
-					break;
-				case PaymentEvent.Context.RETRIEVING_ITEMS:
-					if (event.result === PaymentEvent.Result.SUCCESS) {
-						// if you passed multiple items you will need to handle accordingly for your app
-						this.item = event.payload;
-					}
-					break;
-				case PaymentEvent.Context.PROCESSING_ORDER:
-					if (event.result === PaymentEvent.Result.FAILURE) {
-						console.log(`🛑 Payment Failure - ${event.payload.description} 🛑`);
-						// handle the failure of the purchase
-					} else if (event.result === PaymentEvent.Result.SUCCESS) {
-						// handle the successful purchase
-						console.log('🟢 Payment Success 🟢');
-						console.log(`Order Date: ${event.payload.orderDate}`);
-						console.log(`Receipt Token: ${event.payload.receiptToken}`);
-						finalizeOrder(event.payload);
-					}
-					break;
-				case PaymentEvent.Context.FINALIZING_ORDER:
-					if (event.result === PaymentEvent.Result.SUCCESS) {
-						console.log('Order Finalized');
-					}
-					break;
-				case PaymentEvent.Context.RESTORING_ORDERS:
-					console.log(event);
-					break;
-				default:
-					console.log(`Invalid EventContext: ${event}`);
-					break;
-			}
-		});
+    // Subscribe to the RxJS Observable
+    // You do not have to handle all of the events
+    // RETRIEVING_ITEMS && PROCESSING_ORDER are the ones you'll want to use to handle the purchase flow
+    const subscription = payments$.pipe(toMainThread()).subscribe((event: PaymentEvent.Type) => {
+      switch (event.context) {
+        case PaymentEvent.Context.CONNECTING_STORE:
+          console.log('Store Status: ' + event.result);
+          if (event.result === PaymentEvent.Result.SUCCESS) {
+            const canPay = canMakePayments();
+            if (canPay) {
+              // pass in your product IDs here that you want to query for
+              fetchItems(['io.nstudio.iapdemo.coinsfive', 'io.nstudio.iapdemo.coinsone', 'io.nstudio.iapdemo.coinsonethousand']);
+            }
+          }
+          break;
+        case PaymentEvent.Context.RETRIEVING_ITEMS:
+          if (event.result === PaymentEvent.Result.SUCCESS) {
+            // if you passed multiple items you will need to handle accordingly for your app
+            this.item = event.payload;
+          }
+          break;
+        case PaymentEvent.Context.PROCESSING_ORDER:
+          if (event.result === PaymentEvent.Result.FAILURE) {
+            console.log(`🛑 Payment Failure - ${event.payload.description} 🛑`);
+            // handle the failure of the purchase
+          } else if (event.result === PaymentEvent.Result.SUCCESS) {
+            // handle the successful purchase
+            console.log('🟢 Payment Success 🟢');
+            console.log(`Order Date: ${event.payload.orderDate}`);
+            console.log(`Receipt Token: ${event.payload.receiptToken}`);
+            finalizeOrder(event.payload);
+          }
+          break;
+        case PaymentEvent.Context.FINALIZING_ORDER:
+          if (event.result === PaymentEvent.Result.SUCCESS) {
+            console.log('Order Finalized');
+          }
+          break;
+        case PaymentEvent.Context.RESTORING_ORDERS:
+          console.log(event);
+          break;
+        default:
+          console.log(`Invalid EventContext: ${event}`);
+          break;
+      }
+    });
 
-		// This initializes the internal payment system for the plugin
-		initPayments();
-	}
+    // This initializes the internal payment system for the plugin
+    initPayments();
+  }
 
-	buttonTap() {
-		const opts: BuyItemOptions = {
-			accountUserName: 'someuseraccount123@test.orgbizfree',
-			android: {
-				vrPurchase: true,
-			},
-			ios: {
-				quantity: 1,
-				simulatesAskToBuyInSandbox: true,
-			},
-		};
+  buttonTap() {
+    const opts: BuyItemOptions = {
+      accountUserName: 'someuseraccount123@test.orgbizfree',
+      android: {
+        vrPurchase: true
+      },
+      ios: {
+        quantity: 1,
+        simulatesAskToBuyInSandbox: true
+      }
+    };
 
-		// This method will kick off the platform purchase flow
-		// We are passing the item and an optional object with some configuration
-		buyItem(this.item, opts);
-	}
+    // This method will kick off the platform purchase flow
+    // We are passing the item and an optional object with some configuration
+    buyItem(this.item, opts);
+  }
 }
 ```
 

@@ -118,13 +118,7 @@ declare namespace com {
            *         "INAPP_DATA_SIGNATURE" - String containing the signature of the purchase data that
            *                                  was signed with the private key of the developer
            */
-          getBuyIntent(
-            apiVersion: number,
-            packageName: string,
-            sku: string,
-            type: string,
-            developerPayload: string,
-          ): Bundle;
+          getBuyIntent(apiVersion: number, packageName: string, sku: string, type: string, developerPayload: string): Bundle;
 
           /**
            * Returns the current SKUs owned by the user of the type and package name specified along with
@@ -199,14 +193,7 @@ declare namespace com {
            *         "INAPP_DATA_SIGNATURE" - String containing the signature of the purchase data that
            *                                  was signed with the private key of the developer
            */
-          getBuyIntentToReplaceSkus(
-            apiVersion: number,
-            packageName: string,
-            oldSkus: List<string>,
-            newSku: string,
-            type: string,
-            developerPayload: string,
-          ): Bundle;
+          getBuyIntentToReplaceSkus(apiVersion: number, packageName: string, oldSkus: List<string>, newSku: string, type: string, developerPayload: string): Bundle;
 
           /**
            * Returns a pending intent to launch the purchase flow for an in-app item. This method is
@@ -253,14 +240,7 @@ declare namespace com {
            *                          should start a VR purchase flow. The apiVersion must also be 7 or
            *                          later to use this flag.
            */
-          getBuyIntentExtraParams(
-            apiVersion: number,
-            packageName: string,
-            sku: string,
-            type: string,
-            developerPayload: string,
-            extraParams: Bundle,
-          ): Bundle;
+          getBuyIntentExtraParams(apiVersion: number, packageName: string, sku: string, type: string, developerPayload: string, extraParams: Bundle): Bundle;
 
           /**
            * Returns the most recent purchase made by the user for each SKU, even if that purchase is
@@ -287,13 +267,7 @@ declare namespace com {
            *                                      next set of in-app purchases. Only set if the
            *                                      user has more owned skus than the current list.
            */
-          getPurchaseHistory(
-            apiVersion: number,
-            packageName: string,
-            type: string,
-            continuationToken: string,
-            extraParams: Bundle,
-          ): Bundle;
+          getPurchaseHistory(apiVersion: number, packageName: string, type: string, continuationToken: string, extraParams: Bundle): Bundle;
 
           /**
            * This method is a variant of {@link #isBillingSupported}} that takes an additional
@@ -307,12 +281,7 @@ declare namespace com {
            *               supports returning a VR purchase flow.
            * @return RESULT_OK(0) on success and appropriate response code on failures.
            */
-          isBillingSupportedExtraParams(
-            apiVersion: number,
-            packageName: string,
-            type: string,
-            extraParams: Bundle,
-          ): number;
+          isBillingSupportedExtraParams(apiVersion: number, packageName: string, type: string, extraParams: Bundle): number;
         }
 
         export namespace IInAppBillingService {

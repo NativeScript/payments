@@ -216,15 +216,15 @@ export function onApplePayTap() {
 
 ```ts
 interface ApplePayRequest {
-	paymentItems: Array<ApplePayItems>;
-	merchantId: string; // the merchant ID for this app
-	merchantCapabilities: number;
-	countryCode: string;
-	currencyCode: string;
-	supportedNetworks: Array<ApplePayNetworks>;
-	billingContactFields?: Array<ApplePayContactFields>;
-	shippingContactFields?: Array<ApplePayContactFields>;
-	shippingMethods?: Array<ApplePayShippingMethods>;
+  paymentItems: Array<ApplePayItems>;
+  merchantId: string; // the merchant ID for this app
+  merchantCapabilities: number;
+  countryCode: string;
+  currencyCode: string;
+  supportedNetworks: Array<ApplePayNetworks>;
+  billingContactFields?: Array<ApplePayContactFields>;
+  shippingContactFields?: Array<ApplePayContactFields>;
+  shippingMethods?: Array<ApplePayShippingMethods>;
 }
 ```
 
@@ -232,9 +232,9 @@ interface ApplePayRequest {
 
 ```ts
 interface ApplePayItems {
-	label: string;
-	amount: number;
-	type: ApplePayPaymentItemType;
+  label: string;
+  amount: number;
+  type: ApplePayPaymentItemType;
 }
 ```
 
@@ -242,19 +242,19 @@ interface ApplePayItems {
 
 ```ts
 interface AuthorizePaymentEventData extends EventData {
-	eventName: string;
-	object: any;
-	data?: {
-		payment: PKPayment;
-		token: PKPaymentToken;
-		paymentData: ApplePayPaymentData;
-		billingAddress;
-		billingContact: PKContact;
-		shippingAddress;
-		shippingContact: PKContact;
-		shippingMethod: PKShippingMethod;
-	};
-	completion: (status: ApplePayTransactionStatus) => void;
+  eventName: string;
+  object: any;
+  data?: {
+    payment: PKPayment;
+    token: PKPaymentToken;
+    paymentData: ApplePayPaymentData;
+    billingAddress;
+    billingContact: PKContact;
+    shippingAddress;
+    shippingContact: PKContact;
+    shippingMethod: PKShippingMethod;
+  };
+  completion: (status: ApplePayTransactionStatus) => void;
 }
 ```
 
@@ -262,8 +262,8 @@ interface AuthorizePaymentEventData extends EventData {
 
 ```ts
 interface AuthorizationDidFinishEventData extends EventData {
-	eventName: string;
-	object: any;
+  eventName: string;
+  object: any;
 }
 ```
 
@@ -271,26 +271,26 @@ interface AuthorizationDidFinishEventData extends EventData {
 
 ```ts
 interface ApplePayPaymentData {
-	/**
-	 * Encrypted payment data.
-	 */
-	data;
+  /**
+   * Encrypted payment data.
+   */
+  data;
 
-	/**
-	 * Additional version-dependent information used to decrypt and verify the payment.
-	 */
-	header;
+  /**
+   * Additional version-dependent information used to decrypt and verify the payment.
+   */
+  header;
 
-	/**
-	 * Signature of the payment and header data. The signature includes the signing certificate, its intermediate CA certificate, and information about the signing algorithm.
-	 */
-	signature;
+  /**
+   * Signature of the payment and header data. The signature includes the signing certificate, its intermediate CA certificate, and information about the signing algorithm.
+   */
+  signature;
 
-	/**
-	 * Version information about the payment token.
-	 * The token uses EC_v1 for ECC-encrypted data, and RSA_v1 for RSA-encrypted data.
-	 */
-	version: string;
+  /**
+   * Version information about the payment token.
+   * The token uses EC_v1 for ECC-encrypted data, and RSA_v1 for RSA-encrypted data.
+   */
+  version: string;
 }
 ```
 
