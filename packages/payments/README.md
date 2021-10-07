@@ -97,10 +97,16 @@ export class SomeViewModel {
 			switch (event.context) {
 				case PaymentEvent.Context.CONNECTING_STORE:
 					console.log('Store Status: ' + event.result);
+					if (event.result === PaymentEvent.Result.SUCCESS) {
+						const canPay = canMakePayments();
+						if (canPay) {
+							// pass in your product IDs here that you want to query for
+							fetchItems(['io.nstudio.iapdemo.coinsfive', 'io.nstudio.iapdemo.coinsone', 'io.nstudio.iapdemo.coinsonethousand']);
+						}
+					}
 					break;
 				case PaymentEvent.Context.RETRIEVING_ITEMS:
 					if (event.result === PaymentEvent.Result.SUCCESS) {
-						// keeping a reference to the ONE item we fetched
 						// if you passed multiple items you will need to handle accordingly for your app
 						this.item = event.payload;
 					}
@@ -133,10 +139,6 @@ export class SomeViewModel {
 
 		// This initializes the internal payment system for the plugin
 		initPayments();
-
-		// This will request the items from the app store for the app
-		// The event RETRIEVING_ITEMS will emit and where you can keep a reference to the ITEM(s) that the user is potentially purchasing
-		fetchItems(['io.nstudio.iapdemo.coinsfive', 'io.nstudio.iapdemo.coinsone', 'io.nstudio.iapdemo.coinsonethousand']);
 	}
 
 	buttonTap() {
