@@ -381,44 +381,45 @@ export function canMakePayments(/*types*/): boolean {
 	}
 }
 
-function _purchaseHandler(responseCode: number, purchases: java.util.List<com.android.billingclient.api.Purchase>, skuType?: string) {
-	if (_billingClient) {
-		let pending = purchases;
-		if (!skuType) {
-			pending = _billingClient.queryPurchases(com.android.billingclient.api.BillingClient.SkuType.INAPP).getPurchasesList();
-		}
-		// var isSubscription = skuType === com.android.billingclient.api.BillingClient.SkuType.SUBS;
-		_payments$.next({
-			context: PaymentEvent.Context.PROCESSING_ORDER,
-			result: PaymentEvent.Result.PENDING,
-			payload: pending ? pending.size() : 0,
-		});
-		if (responseCode === com.android.billingclient.api.BillingClient.BillingResponseCode.OK) {
-			if (purchases && purchases.size()) {
-				for (let i = 0; i < purchases.size(); i++) {
-					const purchase: com.android.billingclient.api.Purchase = purchases.get(i);
-					if (purchase) {
-						const order = new Order(purchase, false);
-						// order.isSubscription = isSubscription;
-						_payments$.next({
-							context: PaymentEvent.Context.PROCESSING_ORDER,
-							result: PaymentEvent.Result.SUCCESS,
-							payload: order,
-						});
-					}
-				}
-			}
-		} else {
-			_payments$.next({
-				context: PaymentEvent.Context.PROCESSING_ORDER,
-				result: PaymentEvent.Result.FAILURE,
-				payload: new Failure(responseCode),
-			});
-		}
-	} else {
-		console.error(new Error('BillingClient missing.'));
-	}
-}
+function _purchaseHandler(responseCode: number, purchases: List<Purchase | PurchaseHistoryRecord>, skuType?: string) {
+  if (_billingClient) {
+    let pending = purchases;
+    if (!skuType) {
+      pending = _billingClient
+        .queryPurchases(com.android.billingclient.api.BillingClient.SkuType.INAPP)
+        .getPurchasesList();
+    }
+    // var isSubscription = skuType === com.android.billingclient.api.BillingClient.SkuType.SUBS;
+    _payments$.next({
+      context: PaymentEvent.Context.PROCESSING_ORDER,
+      result: PaymentEvent.Result.PENDING,
+      payload: pending ? pending.size() : 0,
+    });
+    if (responseCode === com.android.billingclient.api.BillingClient.BillingResponseCode.OK) {
+      if (purchases && purchases.size()) {
+        for (let i = 0; i < purchases.size(); i++) {
+          const purchase: Purchase | PurchaseHistoryRecord = purchases.get(i);
+          if (purchase) {
+            const order = new Order(purchase, false);
+            // order.isSubscription = isSubscription;
+            _payments$.next({
+              context: PaymentEvent.Context.PROCESSING_ORDER,
+              result: PaymentEvent.Result.SUCCESS,
+              payload: order,
+            });
+          }
+        }
+      }
+    } else {
+      _payments$.next({
+        context: PaymentEvent.Context.PROCESSING_ORDER,
+        result: PaymentEvent.Result.FAILURE,
+        payload: new Failure(responseCode),
+      });
+    }
+  } else {
+    console.error(new Error('BillingClient missing.'));
+  }
 
 function _mapBillingResponseCode(code: number) {
 	switch (code) {
