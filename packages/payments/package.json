@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/NativeScript/plugins.git"
+    "url": "https://github.com/NativeScript/payments.git"
   },
   "keywords": [
     "NativeScript",
@@ -38,10 +38,10 @@
     }
   ],
   "bugs": {
-    "url": "https://github.com/NativeScript/plugins/issues"
+    "url": "https://github.com/NativeScript/payments/issues"
   },
   "license": "Apache-2.0",
-  "homepage": "https://github.com/NativeScript/plugins",
+  "homepage": "https://github.com/NativeScript/payments",
   "readmeFilename": "README.md",
   "bootstrapper": "@nativescript/plugin-seed"
 }
