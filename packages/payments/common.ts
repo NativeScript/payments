@@ -7,11 +7,11 @@ import { Order } from './order';
 
 export function toMainThread() {
   return <T>(source: Observable<T>) =>
-    new Observable<T>(observer =>
+    new Observable<T>((observer) =>
       source.subscribe({
-        next: x => Utils.executeOnMainThread(() => observer.next(x)),
-        error: err => Utils.executeOnMainThread(() => observer.error(err)),
-        complete: () => Utils.executeOnMainThread(() => observer.complete())
+        next: (x) => Utils.executeOnMainThread(() => observer.next(x)),
+        error: (err) => Utils.executeOnMainThread(() => observer.error(err)),
+        complete: () => Utils.executeOnMainThread(() => observer.complete()),
       })
     );
 }
@@ -22,14 +22,14 @@ export namespace PaymentEvent {
     RETRIEVING_ITEMS = 'RETRIEVING_ITEMS',
     PROCESSING_ORDER = 'PROCESSING_ORDER',
     FINALIZING_ORDER = 'FINALIZING_ORDER',
-    RESTORING_ORDERS = 'RESTORING_ORDERS'
+    RESTORING_ORDERS = 'RESTORING_ORDERS',
   }
 
   export enum Result {
     STARTED = 'STARTED',
     PENDING = 'PENDING',
     SUCCESS = 'SUCCESS',
-    FAILURE = 'FAILURE'
+    FAILURE = 'FAILURE',
   }
 
   type IPayload = Failure | Item | Order | Array<Item> | Array<string> | number | null;
@@ -208,10 +208,17 @@ export namespace PaymentEvent {
  * @private DO NOT USE!
  */
 export const _payments$: ReplaySubject<PaymentEvent.Type> = new ReplaySubject<PaymentEvent.Type>(128);
+
+/**
+ * ConnectableObservable to receive results and events
+ * @deprecated - Use paymentEvents instead.
+ */
+export const payments$: ConnectableObservable<PaymentEvent.Type> = <ConnectableObservable<PaymentEvent.Type>>_payments$.pipe(publish());
+
 /**
  * ConnectableObservable to receive results and events
  */
-export const payments$: ConnectableObservable<PaymentEvent.Type> = <ConnectableObservable<PaymentEvent.Type>>_payments$.pipe(publish());
+export const paymentEvents = payments$;
 
 export interface BuyItemOptions {
   /**
