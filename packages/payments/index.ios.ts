@@ -3,7 +3,7 @@ import { Failure } from './failure';
 import { Item } from './item';
 import { Order, OrderState } from './order';
 
-export { PaymentEvent, payments$, toMainThread } from './common';
+export { PaymentEvent, paymentEvents, payments$, toMainThread } from './common';
 export * from './failure';
 export * from './item';
 export * from './order';
@@ -17,20 +17,20 @@ export function init(): void {
     _payments$.next({
       context: PaymentEvent.Context.CONNECTING_STORE,
       result: PaymentEvent.Result.STARTED,
-      payload: null
+      payload: null,
     });
     _paymentTransactionObserver = new SKPaymentTransactionObserverImpl();
     _payments$.next({
       context: PaymentEvent.Context.CONNECTING_STORE,
       result: PaymentEvent.Result.PENDING,
-      payload: null
+      payload: null,
     });
     try {
       SKPaymentQueue.defaultQueue().addTransactionObserver(_paymentTransactionObserver);
       _payments$.next({
         context: PaymentEvent.Context.CONNECTING_STORE,
         result: PaymentEvent.Result.SUCCESS,
-        payload: null
+        payload: null,
       });
     } catch (e) {
       const errorPayload = typeof e === 'object' ? e.message : e;
@@ -38,7 +38,7 @@ export function init(): void {
       _payments$.next({
         context: PaymentEvent.Context.CONNECTING_STORE,
         result: PaymentEvent.Result.FAILURE,
-        payload: new Failure(null)
+        payload: new Failure(null),
       });
     }
   }
@@ -55,7 +55,7 @@ export function fetchItems(itemIds: Array<string>): void {
   _payments$.next({
     context: PaymentEvent.Context.RETRIEVING_ITEMS,
     result: PaymentEvent.Result.STARTED,
-    payload: itemIds
+    payload: itemIds,
   });
   const productIds: NSMutableSet<string> = NSMutableSet.alloc<string>().init();
   itemIds.forEach((value: string) => productIds.addObject(value));
@@ -66,7 +66,7 @@ export function fetchItems(itemIds: Array<string>): void {
   _payments$.next({
     context: PaymentEvent.Context.RETRIEVING_ITEMS,
     result: PaymentEvent.Result.PENDING,
-    payload: itemIds
+    payload: itemIds,
   });
 }
 
@@ -77,7 +77,7 @@ export function buyItem(item: Item, buyItemOptions: BuyItemOptions): void {
       _payments$.next({
         context: PaymentEvent.Context.PROCESSING_ORDER,
         result: PaymentEvent.Result.PENDING,
-        payload: pendingCount + 1
+        payload: pendingCount + 1,
       });
       const payment = SKMutablePayment.paymentWithProduct(<SKProduct>item.nativeValue);
       if (buyItemOptions) {
@@ -90,7 +90,7 @@ export function buyItem(item: Item, buyItemOptions: BuyItemOptions): void {
         _payments$.next({
           context: PaymentEvent.Context.PROCESSING_ORDER,
           result: PaymentEvent.Result.STARTED,
-          payload: item
+          payload: item,
         });
       } catch (e) {
         const errorPayload = typeof e === 'object' ? e.message : e;
@@ -98,14 +98,14 @@ export function buyItem(item: Item, buyItemOptions: BuyItemOptions): void {
         _payments$.next({
           context: PaymentEvent.Context.PROCESSING_ORDER,
           result: PaymentEvent.Result.FAILURE,
-          payload: new Failure(null)
+          payload: new Failure(null),
         });
       }
     } else {
       _payments$.next({
         context: PaymentEvent.Context.PROCESSING_ORDER,
         result: PaymentEvent.Result.PENDING,
-        payload: pendingCount
+        payload: pendingCount,
       });
     }
   } else {
@@ -117,7 +117,7 @@ export function finalizeOrder(order: Order): void {
   _payments$.next({
     context: PaymentEvent.Context.FINALIZING_ORDER,
     result: PaymentEvent.Result.STARTED,
-    payload: order
+    payload: order,
   });
   if (order.state === OrderState.VALID && !order.restored) {
     try {
@@ -125,7 +125,7 @@ export function finalizeOrder(order: Order): void {
       _payments$.next({
         context: PaymentEvent.Context.FINALIZING_ORDER,
         result: PaymentEvent.Result.PENDING,
-        payload: order
+        payload: order,
       });
     } catch (e) {
       const errorPayload = typeof e === 'object' ? e.message : e;
@@ -133,14 +133,14 @@ export function finalizeOrder(order: Order): void {
       _payments$.next({
         context: PaymentEvent.Context.FINALIZING_ORDER,
         result: PaymentEvent.Result.FAILURE,
-        payload: new Failure(null)
+        payload: new Failure(null),
       });
     }
   } else {
     _payments$.next({
       context: PaymentEvent.Context.FINALIZING_ORDER,
       result: PaymentEvent.Result.FAILURE,
-      payload: new Failure(999)
+      payload: new Failure(999),
     });
   }
 }
@@ -149,7 +149,7 @@ export function restoreOrders(): void {
   _payments$.next({
     context: PaymentEvent.Context.RESTORING_ORDERS,
     result: PaymentEvent.Result.STARTED,
-    payload: null
+    payload: null,
   });
   try {
     SKPaymentQueue.defaultQueue().restoreCompletedTransactions();
@@ -159,7 +159,7 @@ export function restoreOrders(): void {
     _payments$.next({
       context: PaymentEvent.Context.RESTORING_ORDERS,
       result: PaymentEvent.Result.FAILURE,
-      payload: new Failure(null)
+      payload: new Failure(null),
     });
   }
 }
@@ -189,7 +189,7 @@ class SKProductRequestDelegateImpl extends NSObject implements SKProductsRequest
     _payments$.next({
       context: PaymentEvent.Context.RETRIEVING_ITEMS,
       result: PaymentEvent.Result.SUCCESS,
-      payload: result
+      payload: result,
     });
 
     this._cleanup();
@@ -199,7 +199,7 @@ class SKProductRequestDelegateImpl extends NSObject implements SKProductsRequest
     _payments$.next({
       context: PaymentEvent.Context.RETRIEVING_ITEMS,
       result: PaymentEvent.Result.FAILURE,
-      payload: new Failure(error.code)
+      payload: new Failure(error.code),
     });
     this._cleanup();
   }
@@ -222,7 +222,7 @@ class SKPaymentTransactionObserverImpl extends NSObject implements SKPaymentTran
     _payments$.next({
       context: PaymentEvent.Context.RESTORING_ORDERS,
       result: PaymentEvent.Result.SUCCESS,
-      payload: null
+      payload: null,
     });
   }
 
@@ -230,7 +230,7 @@ class SKPaymentTransactionObserverImpl extends NSObject implements SKPaymentTran
     _payments$.next({
       context: PaymentEvent.Context.RESTORING_ORDERS,
       result: PaymentEvent.Result.FAILURE,
-      payload: new Failure(error.code)
+      payload: new Failure(error.code),
     });
   }
 
@@ -242,7 +242,7 @@ class SKPaymentTransactionObserverImpl extends NSObject implements SKPaymentTran
           _payments$.next({
             context: PaymentEvent.Context.FINALIZING_ORDER,
             result: PaymentEvent.Result.SUCCESS,
-            payload: new Order(transaction)
+            payload: new Order(transaction),
           });
         }
       }
@@ -250,7 +250,7 @@ class SKPaymentTransactionObserverImpl extends NSObject implements SKPaymentTran
     _payments$.next({
       context: PaymentEvent.Context.PROCESSING_ORDER,
       result: PaymentEvent.Result.PENDING,
-      payload: queue.transactions ? queue.transactions.count : 0
+      payload: queue.transactions ? queue.transactions.count : 0,
     });
   }
 
@@ -267,7 +267,7 @@ function _transactionHandler(queue: SKPaymentQueue, transactions: NSArray<SKPaym
   _payments$.next({
     context: PaymentEvent.Context.PROCESSING_ORDER,
     result: PaymentEvent.Result.PENDING,
-    payload: queue.transactions ? queue.transactions.count : 0
+    payload: queue.transactions ? queue.transactions.count : 0,
   });
   if (transactions && transactions.count) {
     for (let i = 0; i < transactions.count; i++) {
@@ -278,14 +278,14 @@ function _transactionHandler(queue: SKPaymentQueue, transactions: NSArray<SKPaym
           _payments$.next({
             context: PaymentEvent.Context.PROCESSING_ORDER,
             result: PaymentEvent.Result.SUCCESS,
-            payload: new Order(transaction)
+            payload: new Order(transaction),
           });
           break;
         case SKPaymentTransactionState.Failed:
           _payments$.next({
             context: PaymentEvent.Context.PROCESSING_ORDER,
             result: PaymentEvent.Result.FAILURE,
-            payload: new Failure(transaction.error.code)
+            payload: new Failure(transaction.error.code),
           });
           try {
             queue.finishTransaction(transaction);
@@ -298,12 +298,12 @@ function _transactionHandler(queue: SKPaymentQueue, transactions: NSArray<SKPaym
           _payments$.next({
             context: PaymentEvent.Context.PROCESSING_ORDER,
             result: PaymentEvent.Result.SUCCESS,
-            payload: new Order(transaction.originalTransaction, true)
+            payload: new Order(transaction.originalTransaction, true),
           });
           _payments$.next({
             context: PaymentEvent.Context.RESTORING_ORDERS,
             result: PaymentEvent.Result.PENDING,
-            payload: new Order(transaction.originalTransaction, true)
+            payload: new Order(transaction.originalTransaction, true),
           });
           try {
             queue.finishTransaction(transaction);
@@ -324,6 +324,6 @@ function _transactionHandler(queue: SKPaymentQueue, transactions: NSArray<SKPaym
   _payments$.next({
     context: PaymentEvent.Context.PROCESSING_ORDER,
     result: PaymentEvent.Result.PENDING,
-    payload: queue.transactions ? queue.transactions.count : 0
+    payload: queue.transactions ? queue.transactions.count : 0,
   });
 }
