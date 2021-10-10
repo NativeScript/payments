@@ -2,7 +2,7 @@ import { BuyItemOptions } from './common';
 import { Item } from './item';
 import { Order } from './order';
 
-export { BuyItemOptions, PaymentEvent, payments$ } from './common';
+export { BuyItemOptions, PaymentEvent, paymentEvents, payments$ } from './common';
 export * from './item';
 export * from './order';
 
