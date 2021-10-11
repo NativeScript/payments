@@ -1,4 +1,4 @@
-import { BaseItem } from './item.common';
+import { BaseItem } from './common';
 type SkuDetails = com.android.billingclient.api.SkuDetails;
 
 export class Item extends BaseItem {

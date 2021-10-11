@@ -1,6 +1,6 @@
-import { BaseOrder, OrderState } from './order.common';
+import { BaseOrder, OrderState } from './common';
 
-export { OrderState } from './order.common';
+export { OrderState } from './common';
 
 export class Order extends BaseOrder {
   public nativeValue: SKPaymentTransaction;

@@ -1,6 +1,6 @@
-import { BaseOrder } from './order.common';
+import { BaseOrder } from './common';
 
-export { OrderState } from './order.common';
+export { OrderState } from './common';
 
 export declare class Order extends BaseOrder {
   public readonly debug: string | null;

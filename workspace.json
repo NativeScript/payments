@@ -126,6 +126,21 @@
                 "glob": "**/*",
                 "input": "packages/payments/platforms/",
                 "output": "./platforms/"
+              },
+              {
+                "glob": "index.d.ts",
+                "input": "packages/payments/failure/",
+                "output": "./failure/"
+              },
+              {
+                "glob": "index.d.ts",
+                "input": "packages/payments/item/",
+                "output": "./item/"
+              },
+              {
+                "glob": "index.d.ts",
+                "input": "packages/payments/order/",
+                "output": "./order/"
               }
             ]
           }

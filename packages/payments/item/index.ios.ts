@@ -1,4 +1,4 @@
-import { BaseItem } from './item.common';
+import { BaseItem } from './common';
 
 export class Item extends BaseItem {
   public nativeValue: SKProduct;

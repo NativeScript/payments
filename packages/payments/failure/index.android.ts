@@ -1,6 +1,6 @@
-import { BaseFailure, FailureTypes } from './failure.common';
+import { BaseFailure, FailureTypes } from './common';
 
-export { FailureTypes } from './failure.common';
+export { FailureTypes } from './common';
 
 export class Failure extends BaseFailure {
   constructor(errorCode: number | null) {
