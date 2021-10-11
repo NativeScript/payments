@@ -3,6 +3,7 @@ import { Item } from './item';
 import { Order } from './order';
 
 export { BuyItemOptions, PaymentEvent, paymentEvents, payments$ } from './common';
+export * from './failure';
 export * from './item';
 export * from './order';
 
