@@ -73,6 +73,23 @@ for Google Play Billing](https://developer.android.com/google/play/billing/test)
 This plugin uses a RxJS Observable to emit the events to handle the purchase flow. To avoid threading errors with the platform purchasing flow, you can use `toMainThread()` as a pipe on the Observable so that the purchase logic executes on the main thread. `paymentEvents.pipe(toMainThread()).subscribe((event: PaymentEvent.Type) => {...`
 The sample below should give a good starting point on how to use the Observable and setup the purchasing mechanism.
 
+## API
+
+- `init()` Sets up the internal system of the plugin.
+- `paymentEvents` The RxJS Observable to emit the events to handle the purchase flow.
+
+The following methods get called in response to the events emitted by `paymentEvents`.
+
+| Methods                                            | Description                                                                                                                                                                                            |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `fetchItems(itemIds: Array<string>)`               | Queries the store for the items requested. You should handle these items inside the `PaymentEvent.Context.RETRIEVING_ITEMS` event.                                                                     |
+| `buyItem(item: Item, options?: BuyItemOptions)`    | Starts the purchase flow on Android & iOS and emits `PaymentEvent.Context.PROCESSING_ORDER` with `SUCCESS` or `FAILURE`. If SUCCESS then you can call the last method to the `finalizeOrder(payload)`. |
+| `fetchSubscriptions(itemIds: Array<string>)`       | Queries the store for the subscriptions offered by the app. You should handle these subscriptions inside the `PaymentEvent.Context.RETRIEVING_ITEMS` event.                                            |
+| `startSubscription(item: Item, userData?: string)` | `Android only`. Lanches the billing flow by presenting the Google Store subscription UI interface.                                                                                                     |
+| `restoreOrders(skuType?: string)`                  | Returns the purchase made by the user for each product. You call this method to install purchases on additional devices or restore purchases for an application that the user deleted and reinstalled. |
+| `canMakePayments()`                                | Returns `true` or `false` indicating whether the billing service is available and is setup successfully.                                                                                               |
+| `tearDown()`                                       | Closes the connection to the billing service to free up resources.                                                                                                                                     |
+
 ## Usage
 
 The standard flow of method calls:
