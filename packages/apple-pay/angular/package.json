@@ -1,16 +1,3 @@
 {
-  "name": "nativescript-apple-pay-angular",
-  "ngPackage": {
-    "lib": {
-      "entryFile": "index.ts",
-      "umdModuleIds": {
-        "@nativescript/core": "ns-core",
-        "@nativescript/angular": "ns-angular",
-        "@nativescript/apple-pay": "ns-apple-pay"
-      }
-    },
-    "allowedNonPeerDependencies": [
-      "."
-    ]
-  }
+  "name": "nativescript-apple-pay-angular"
 }

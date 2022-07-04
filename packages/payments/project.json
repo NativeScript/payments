@@ -1,0 +1,77 @@
+{
+  "projectType": "library",
+  "sourceRoot": "packages/payments",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "options": {
+        "outputPath": "dist/packages/payments",
+        "tsConfig": "packages/payments/tsconfig.json",
+        "packageJson": "packages/payments/package.json",
+        "main": "packages/payments/index.d.ts",
+        "assets": [
+          "packages/payments/*.md",
+          "packages/payments/index.d.ts",
+          "LICENSE",
+          {
+            "glob": "**/*",
+            "input": "packages/payments/platforms/",
+            "output": "./platforms/"
+          },
+          {
+            "glob": "index.d.ts",
+            "input": "packages/payments/failure/",
+            "output": "./failure/"
+          },
+          {
+            "glob": "index.d.ts",
+            "input": "packages/payments/item/",
+            "output": "./item/"
+          },
+          {
+            "glob": "index.d.ts",
+            "input": "packages/payments/order/",
+            "output": "./order/"
+          }
+        ]
+      },
+      "dependsOn": [
+        {
+          "target": "build.all",
+          "projects": "dependencies"
+        }
+      ]
+    },
+    "build.all": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "commands": ["node tools/scripts/build-finish.ts payments"],
+        "parallel": false
+      },
+      "outputs": ["dist/packages/payments"],
+      "dependsOn": [
+        {
+          "target": "build.all",
+          "projects": "dependencies"
+        },
+        {
+          "target": "build",
+          "projects": "self"
+        }
+      ]
+    },
+    "focus": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "commands": ["nx g @nativescript/plugin-tools:focus-packages payments"],
+        "parallel": false
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["packages/payments/**/*.ts"]
+      }
+    }
+  }
+}

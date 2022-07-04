@@ -1,0 +1,62 @@
+{
+  "projectType": "library",
+  "sourceRoot": "packages/google-pay",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "options": {
+        "outputPath": "dist/packages/google-pay",
+        "tsConfig": "packages/google-pay/tsconfig.json",
+        "packageJson": "packages/google-pay/package.json",
+        "main": "packages/google-pay/index.d.ts",
+        "assets": [
+          "packages/google-pay/*.md",
+          "packages/google-pay/index.d.ts",
+          "LICENSE",
+          {
+            "glob": "**/*",
+            "input": "packages/google-pay/platforms/",
+            "output": "./platforms/"
+          }
+        ]
+      },
+      "dependsOn": [
+        {
+          "target": "build.all",
+          "projects": "dependencies"
+        }
+      ]
+    },
+    "build.all": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "commands": ["node tools/scripts/build-finish.ts google-pay"],
+        "parallel": false
+      },
+      "outputs": ["dist/packages/google-pay"],
+      "dependsOn": [
+        {
+          "target": "build.all",
+          "projects": "dependencies"
+        },
+        {
+          "target": "build",
+          "projects": "self"
+        }
+      ]
+    },
+    "focus": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "commands": ["nx g @nativescript/plugin-tools:focus-packages google-pay"],
+        "parallel": false
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["packages/google-pay/**/*.ts"]
+      }
+    }
+  }
+}
