@@ -6,5 +6,6 @@
     "demo-angular": "apps/demo-angular",
     "google-pay": "packages/google-pay",
     "payments": "packages/payments"
-  }
+  },
+  "$schema": "./node_modules/nx/schemas/workspace-schema.json"
 }
