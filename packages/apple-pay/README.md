@@ -2,6 +2,30 @@
 
 A plugin that allows you to offer [Apple Pay](https://developer.apple.com/documentation/passkit/apple_pay?language=objc) in your iOS apps.
 
+## Contents
+* [Installation](#installation)
+* [Requirements](#requirements)
+* [Use @nativescript/apple-pay](#use-nativescriptapple-pay)
+  * [Implement Apple Pay](#implement-apple-pay)
+* [API](#api)
+  * [ApplePayBtn class](#applepaybtn-class)
+  * [Enums](#enums)
+      * [ApplePayEvents](#applepayevents)
+      * [ApplePayContactFields](#applepaycontactfields)
+      * [ApplePayNetworks](#applepaynetworks)
+      * [ApplePayMerchantCapability](#applepaymerchantcapability)
+      * [ApplePayMerchantCapaApplePayTransactionStatusbility](#applepaymerchantcapaapplepaytransactionstatusbility)
+      * [ApplePayPaymentItemType](#applepaypaymentitemtype)
+      * [ApplePayButtonType](#applepaybuttontype)
+      * [ApplePayButtonStyle](#applepaybuttonstyle)
+  * [Interfaces](#interfaces)
+    * [ApplePayRequest](#applepayrequest)
+    * [ApplePayItems](#applepayitems)
+    * [AuthorizePaymentEventData](#authorizepaymenteventdata)
+    * [AuthorizationDidFinishEventData](#authorizationdidfinisheventdata)
+    * [ApplePayPaymentData](#applepaypaymentdata)
+* [License](#license)
+
 ## Installation
 
 ```cli
@@ -13,15 +37,15 @@ For Apple Pay to work in your iOS application, you need to complete the followin
 
 1. Create a merchant ID
 
-An identifier you register with Apple that uniquely identifies your business as a merchant able to accept payments. This ID never expires and can be used on multiple websites and iOS apps. See [Create a merchant identifier](https://help.apple.com/developer-account/#/devb2e62b839?sub=dev103e030bb) for the setup steps.
+A Merchant ID is an identifier you register with Apple that uniquely identifies your business as a merchant able to accept payments. This ID never expires and can be used on multiple websites and iOS apps. See [Create a merchant identifier](https://help.apple.com/developer-account/#/devb2e62b839?sub=dev103e030bb) for the setup steps.
 
 2. Create a Payment Processing certificate
 
-A certificate that is associated with your merchant ID and used to secure transaction data. Apple Pay servers use the certificate’s public key to encrypt payment data. You (or your payment service provider) use the private key to decrypt the data to process payments. See [Create a payment processing certificate](https://help.apple.com/developer-account/#/devb2e62b839?sub=devf31990e3f) for the setup steps.
+The certificate is associated with your merchant ID and used to secure transaction data. Apple Pay servers use the certificate’s public key to encrypt payment data. You (or your payment service provider) use the private key to decrypt the data to process payments. See [Create a payment processing certificate](https://help.apple.com/developer-account/#/devb2e62b839?sub=devf31990e3f) for the setup steps.
 
 3. Enable Apple Pay in Xcode.
 
-For the setup step, see [Enable Apple Pay](https://help.apple.com/xcode/mac/9.3/#/deva43983eb7?sub=dev44ce8ef13).
+Follow the steps [Enable Apple Pay](https://help.apple.com/xcode/mac/9.3/#/deva43983eb7?sub=dev44ce8ef13).
 
 For a video showing the configuration steps, see: [Configuring Your Developer Account for Apple Pay](https://developer.apple.com/videos/play/tech-talks/110336/).
 
@@ -47,7 +71,7 @@ To implement Apple Pay in your app, follow the following steps:
 2. Handle the button's `tap` event
 In the tap event's callback function, do the following:
 
-  1. Check if Apple Pay is supported
+  1. Check if Apple Pay is supported by calling `isApplePaySupported()`
 
   ```ts
   isApplePaySupported: boolean = isApplePaySupported()
@@ -56,26 +80,27 @@ In the tap event's callback function, do the following:
   2. Listen to the `DidAuthorizePaymentHandler` event
 
   - This event is emitted when a user authorizes the app to make payments with their payment data.
-  - The event handler receives a [AuthorizePaymentEventData](#authorizepaymenteventdata) object containing the user's data and other transactional data. Pass that data to your provider of payments handling services.
+  - Make a call to your payments services provider(Stripe, PayPal, etc) sending the user's data and other transactional data([AuthorizePaymentEventData](#authorizepaymenteventdata) object) received from the event. 
 
   3. If Apple Pay is supported, present the user with the payment sheet by calling the `createPaymentRequest()` method on the `ApplePayBtn` instance. 
+
+The following code is the example of the preceding steps.
 
 ```ts
 import { ApplePayBtn, ApplePayContactFields, ApplePayEvents, ApplePayItems, ApplePayMerchantCapability, ApplePayNetworks, ApplePayPaymentItemType, ApplePayRequest, ApplePayTransactionStatus, AuthorizePaymentEventData } from '@nativescript/apple-pay';
 
 export function onApplePayTap() {
 	try {
-		// just ensuring this runs only on iOS
+		//Ensure this runs only on iOS
 		if (global.isIOS) {
+      // 2.1
+      if(isApplePaySupported()){ 
 			const applePayBtn = args.object as ApplePayBtn;
 
-			// Register the DidAuthorizePaymentHandler event listener
+			// 2.2. Register the DidAuthorizePaymentHandler event listener
 			applePayBtn.once(ApplePayEvents.DidAuthorizePaymentHandler, async (args: AuthorizePaymentEventData) => {
 				console.log(ApplePayEvents.DidAuthorizePaymentHandler);
 
-				// this is where you do backend processing with your payment provider (Stripe, PayPal, etc.)
-                // this payload is just a sample, your payload to a provider will likely be different
-                // you can see here how to access the encrypted values from Apple Pay inside the `args.data.paymentData`
 				const payloadToBackend = {
 					transaction_type: 'purchase',
 					merchant_ref: args.data.paymentData.header.transactionId,
@@ -88,7 +113,7 @@ export function onApplePayTap() {
 						header: args.data.paymentData.header
 					}
 				};
-
+        // Call to your payments services provider (Stripe, PayPal, etc)
         const result = await someHttpMethodToYourProviderBackend(payloadToBackend);
 
 				if (result && result.value === true) {
@@ -96,12 +121,12 @@ export function onApplePayTap() {
 					args.completion(ApplePayTransactionStatus.Success);
 					// now you can follow through with your user flow since the transactin has been successful with your provider
 				} else {
-                    // payment failed on the backend, so show the FAILURE to close the Apple Pay sheet
+          // payment failed on the backend, so show the FAILURE to close the Apple Pay sheet
 					args.completion(ApplePayTransactionStatus.Failure);
 				}
 			});
 
-            // these are the items your customer is paying for
+      // The items your customer is paying for
 			const paymentItems = [
 				{
 					amount: 20.50,
@@ -121,11 +146,12 @@ export function onApplePayTap() {
 				supportedNetworks: [ApplePayNetworks.Amex, ApplePayNetworks.Visa, ApplePayNetworks.Discover, ApplePayNetworks.MasterCard],
 			} as ApplePayRequest;
 
-            // `createPaymentRequest` will call into the Apple Pay SDK and present the user with the payment sheet for the configuration provided
+      // Present the user with the payment sheet for the configuration provided
 			await applePayBtn.createPaymentRequest(request).catch((err) => {
 				console.log('Apple Pay Error', err);
-			});
-		}
+			  });
+		  } 
+    }
 	} catch (error) {
 		console.log(error);
 	}
@@ -134,8 +160,9 @@ export function onApplePayTap() {
 
 # API
 
-## ApplePayBtn Methods
-| Name | Description
+## ApplePayBtn class
+
+| Method | Description
 |:----|:------------
 | `createPaymentRequest(request: ApplePayRequest)` | Creates the Apple Pay payment request and presents the user with the payment sheet. |
 
@@ -227,9 +254,9 @@ export function onApplePayTap() {
 
 | Key          | Value                             |
 | ------------ | --------------------------------- |
-| `White`        | PKPaymentButtonStyle.White        |
-| `WhiteOutline` | PKPaymentButtonStyle.WhiteOutline |
-| `Black`        | PKPaymentButtonStyle.Black        |
+| White        | PKPaymentButtonStyle.White        |
+| WhiteOutline | PKPaymentButtonStyle.WhiteOutline |
+| Black        | PKPaymentButtonStyle.Black        |
 
 ## Interfaces
 
