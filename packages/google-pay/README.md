@@ -43,7 +43,12 @@ Before you get started, review the following prerequisites:
 - [Add a payment method to Google](https://support.google.com/pay/answer/7625139).
 - Adhere to the [Google Pay API Acceptable Use Policy](https://payments.developers.google.com/terms/aup) and the [Google Play developer policy](https://support.google.com/googleplay/android-developer/answer/9858738).
 
-> **Note:** Payment token<p>If you're using a payments service provider, you need a valid payment token for your app in  production mode. You can view the configuration for a number of [providers in the Google documentation.](https://developers.google.com/pay/api/android/guides/tutorial#tokenization).</p><p>During development you can use the example below for the gateway token configuration when creating a payment request.</p>
+## Important note about payment token
+
+If you're using a payments service provider, you need a valid payment token for your app in  production mode. You can view the configuration for a number of [providers in the Google documentation.](https://developers.google.com/pay/api/android/guides/tutorial#tokenization).
+
+During development you can use the example below for the gateway token configuration when creating a payment request.
+
 ```ts
 parameters: {
     gateway: 'example', // in production replace with your gateway provider
