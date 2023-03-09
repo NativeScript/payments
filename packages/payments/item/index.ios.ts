@@ -16,6 +16,7 @@ export class Item extends BaseItem {
     this.priceAmount = nativeValue.price.doubleValue;
     this.priceFormatted = formatter.stringFromNumber(nativeValue.price as any);
     this.priceCurrencyCode = <string>nativeValue.priceLocale.objectForKey(NSLocaleCurrencyCode);
+    this.isFamilyShareable = nativeValue.isFamilyShareable;
   }
 
   public get debug(): string | null {

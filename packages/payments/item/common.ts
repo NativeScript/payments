@@ -12,6 +12,8 @@ export abstract class BaseItem {
   public priceCurrencyCode: string;
   /** Android only */
   public type: string;
+  /** iOS only */
+  public isFamilyShareable: boolean;
 
   constructor(nativeValue: SkuDetails | SKProduct) {
     this.nativeValue = nativeValue;
