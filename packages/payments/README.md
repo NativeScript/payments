@@ -1,6 +1,34 @@
 # @nativescript/payments
+<!-- TODO: Add subscriptions example -->
+A plugin that allows your app to use in-app purchases and subscriptions using Apple AppStore and Google PlayStore purchasing systems.
 
-In-App Purchase and Subscriptions for NativeScript iOS and Android.
+This plugin uses a [RxJS Observable](https://rxjs.dev/guide/observable) to emit the events to handle the purchase flow. To avoid threading errors with the platform purchasing flow, you can use `toMainThread()` as a pipe on the Observable so that the purchase logic executes on the main thread. `paymentEvents.pipe(toMainThread()).subscribe((event: PaymentEvent.Type) => {...`
+
+[In-App Purchase exmple](#in-app-purchase-example) should give a good starting point on how to use the Observable and setup the purchasing mechanism.
+
+**Payments on iOS example**
+| Example Item List | PurchasConfirmation | Purchase Done | Purchase Successful 
+|:------|:------|:-------|:-----
+| ![Purchase Item List Example](https://raw.githubusercontent.com/NativeScript/payments/main/assets/payments/images/ios-payments4.png) | ![Purchase Flow Confirmation](https://raw.githubusercontent.com/NativeScript/payments/main/assets/payments/images/ios-payments5.png) | ![Purchase Flow Done](https://raw.githubusercontent.com/NativeScript/payments/main/assets/payments/images/ios-payments6.png) | ![Purchase Flow Success](https://raw.githubusercontent.com/NativeScript/payments/main/assets/payments/images/ios-payments7.png) |
+
+**Payments on Android example**
+
+| Example Item List | Purchas Confirmation | Purchase Successful 
+|:------|:------|:-------
+| ![Item List Example](https://raw.githubusercontent.com/NativeScript/payments/main/assets/payments/images/android-payments3.png) | ![Purchase Flow Confirmation](https://raw.githubusercontent.com/NativeScript/payments/main/assets/payments/images/android-payments4.png) | ![Purchase Flow Successful](https://raw.githubusercontent.com/NativeScript/payments/main/assets/payments/images/android-payments5.png) |
+
+## Contents
+
+* [Installation](#installation)
+* [Prerequisites](#prerequisites)
+  * [iOS prerequisites](#ios-prerequisites)
+  * [Android prerequisites](#android-prerequisites)
+    * [Important note about Google items](#important-note-about-google-items)
+* [Use @nativescript/payments](#use-nativescriptpayments)
+  * [Standard usage flow](#standard-usage-flow)
+  * [In-App Purchase example](#in-app-purchase-example)
+* [API](#api)
+* [License](#license)
 
 ## Installation
 
@@ -8,27 +36,11 @@ In-App Purchase and Subscriptions for NativeScript iOS and Android.
 ns plugin add @nativescript/payments
 ```
 
-## What does this plugin do?
-
-This allows your app to use in app purchases and subscriptions using Apple AppStore and Google PlayStore purchasing systems.
-
-### iOS
-
-| Example Item List                                                                                                                    | Purchase Confirmation                                                                                                                | Purchase Done                                                                                                                | Purchase Successful                                                                                                             |
-| ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| ![Purchase Item List Example](https://raw.githubusercontent.com/NativeScript/payments/main/assets/payments/images/ios-payments4.png) | ![Purchase Flow Confirmation](https://raw.githubusercontent.com/NativeScript/payments/main/assets/payments/images/ios-payments5.png) | ![Purchase Flow Done](https://raw.githubusercontent.com/NativeScript/payments/main/assets/payments/images/ios-payments6.png) | ![Purchase Flow Success](https://raw.githubusercontent.com/NativeScript/payments/main/assets/payments/images/ios-payments7.png) |
-
-### Android
-
-| Example Item List                                                                                                               | Purchase Confirmation                                                                                                                    | Purchase Successful                                                                                                                    |
-| ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| ![Item List Example](https://raw.githubusercontent.com/NativeScript/payments/main/assets/payments/images/android-payments3.png) | ![Purchase Flow Confirmation](https://raw.githubusercontent.com/NativeScript/payments/main/assets/payments/images/android-payments4.png) | ![Purchase Flow Successful](https://raw.githubusercontent.com/NativeScript/payments/main/assets/payments/images/android-payments5.png) |
-
 ## Prerequisites
 
 Before you get started, review the following prerequisites:
 
-### Apple (iOS)
+### iOS prerequisites
 
 To offer in app purchases for your iOS app. You will need to create items for the app on [AppStoreConnect.Apple.Com](https://appstoreconnect.apple.com).
 
@@ -37,62 +49,39 @@ To offer in app purchases for your iOS app. You will need to create items for th
 On the form to create the in app purchase item, the `Product ID` is the value you will use to fetch your items for the user to purchase in your app.
 ![Product ID Form Apple](https://raw.githubusercontent.com/NativeScript/payments/main/assets/payments/images/ios-payments2.png)
 
-Once you complete an item you will see a list of all items for the app listed on the AppStore Connect.
+Once you complete creating an item you will see a list of all items for the app listed on the AppStore Connect.
 ![List of IAP Items](https://raw.githubusercontent.com/NativeScript/payments/main/assets/payments/images/ios-payments3.png)
 
 To test iOS purchases fully, you will need a real iOS device. You will also need a [test user in the sandbox environment](https://appstoreconnect.apple.com/access/testers) on your appstore account.
 
 ![Sandbox Testers](https://raw.githubusercontent.com/NativeScript/payments/main/assets/payments/images/sandbox-testers.png)
 
-### Google (Android)
+### Android prerequisites
 
-To offer in app purchases for your Android app you will need to upload at least ONE apk/aab to the [Google Play Console](https://play.google.com).
+1. To offer in-app purchases for your Android app, you will need to upload at least ONE apk/aab to the [Google Play Console](https://play.google.com).
 
-Once you have uploaded one aab to the console for your app you can create in app products on the console.
+2. Create in-app products on the console.
 ![Create new in app products](https://raw.githubusercontent.com/NativeScript/payments/main/assets/payments/images/android-payments1.png)
 
 On the form to create your product, the `Product ID` is the value you will use to fetch your products for the user to purchase.
 
-**Important Tip for Google Products**
+#### Important note about Google items
 
-Google does not like numeric values in the ID field. It seems to ignore the Sku when querying for your items and only returns one item instead of multiple values if the IDs contain numeric values.
-
+- Google does not like numeric values in the ID field. It seems to ignore the Sku when querying for your items and only returns one item instead of multiple values if the IDs contain numeric values.
 ![Product ID Form](https://raw.githubusercontent.com/NativeScript/payments/main/assets/payments/images/android-payments2.png)
 
-**Important note about Google items**
-
-Google in app products will not work until Google has reviewed the app. They will appear in the list of products, but the API will error trying to purchase them. The title of the item when you call `fetchItems(['your.product.id']) should be suffixed with (in review) or something similar when returned at this point. You will not be able to finish the purchase flow until the review period has passed.
+- Google in app products will not work until Google has reviewed the app. They will appear in the list of products, but the API will error trying to purchase them. The title of the item when you call `fetchItems(['your.product.id']) should be suffixed with (in review) or something similar when returned at this point. You will not be able to finish the purchase flow until the review period has passed.
 
 ![Active, in review](https://raw.githubusercontent.com/NativeScript/payments/main/assets/payments/images/android-active-inreview.png)
 
 To test Android purchases completely, you should use a real device with Google Play setup and logged into an account. You can use [test accounts
 for Google Play Billing](https://developer.android.com/google/play/billing/test) for the work flow. This will allow you to test the app in development properly. For more info: https://support.google.com/googleplay/android-developer/answer/6062777
 
-**Note about the plugin usage:**
+## Use @nativescript/payments
 
-This plugin uses a RxJS Observable to emit the events to handle the purchase flow. To avoid threading errors with the platform purchasing flow, you can use `toMainThread()` as a pipe on the Observable so that the purchase logic executes on the main thread. `paymentEvents.pipe(toMainThread()).subscribe((event: PaymentEvent.Type) => {...`
-The sample below should give a good starting point on how to use the Observable and setup the purchasing mechanism.
+### Standard usage flow
 
-## API
-
-- `init()` Sets up the internal system of the plugin.
-- `paymentEvents` The RxJS Observable to emit the events to handle the purchase flow.
-
-The following methods get called in response to the events emitted by `paymentEvents`.
-
-| Methods                                            | Description                                                                                                                                                                                            |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `fetchItems(itemIds: Array<string>)`               | Queries the store for the items requested. You should handle these items inside the `PaymentEvent.Context.RETRIEVING_ITEMS` event.                                                                     |
-| `buyItem(item: Item, options?: BuyItemOptions)`    | Starts the purchase flow on Android & iOS and emits `PaymentEvent.Context.PROCESSING_ORDER` with `SUCCESS` or `FAILURE`. If SUCCESS then you can call the last method to the `finalizeOrder(payload)`. |
-| `fetchSubscriptions(itemIds: Array<string>)`       | Queries the store for the subscriptions offered by the app. You should handle these subscriptions inside the `PaymentEvent.Context.RETRIEVING_ITEMS` event.                                            |
-| `startSubscription(item: Item, userData?: string)` | `Android only`. Lanches the billing flow by presenting the Google Store subscription UI interface.                                                                                                     |
-| `restoreOrders(skuType?: string)`                  | Returns the purchase made by the user for each product. You call this method to install purchases on additional devices or restore purchases for an application that the user deleted and reinstalled. |
-| `canMakePayments()`                                | Returns `true` or `false` indicating whether the billing service is available and is setup successfully.                                                                                               |
-| `tearDown()`                                       | Closes the connection to the billing service to free up resources.                                                                                                                                     |
-
-## Usage
-
-The standard flow of method calls:
+Below is the standard flow of the plugin's methods calls:
 
 ```typescript
 // This sets up the internal system of the plugin
@@ -118,7 +107,7 @@ finalizeOrder(payload)
 // at this point you would process the order with your backend given the receiptToken from the purchase flow
 ```
 
-## Example
+### In-App Purchase example
 
 ```typescript
 import { buyItem, BuyItemOptions, canMakePayments, fetchItems, finalizeOrder, init as initPayments, Item, PaymentEvent, paymentEvents, toMainThread } from '@nativescript/payments';
@@ -199,6 +188,24 @@ export class SomeViewModel {
   }
 }
 ```
+
+## API
+
+- `init()` Sets up the internal system of the plugin.
+- `paymentEvents` The RxJS Observable to emit the events to handle the purchase flow.
+
+The following methods get called in response to the events emitted by `paymentEvents`.
+
+| Method | Description
+|:-------|:-----------
+| `fetchItems(itemIds: Array<string>)`               | Queries the store for the items requested. You should handle these items inside the `PaymentEvent.Context.RETRIEVING_ITEMS` event.                                                                     |
+| `buyItem(item: Item, options?: BuyItemOptions)`    | Starts the purchase flow on Android & iOS and emits `PaymentEvent.Context.PROCESSING_ORDER` with `SUCCESS` or `FAILURE`. If SUCCESS then you can call the last method to the `finalizeOrder(payload)`. |
+| `fetchSubscriptions(itemIds: Array<string>)`       | Queries the store for the subscriptions offered by the app. You should handle these subscriptions inside the `PaymentEvent.Context.RETRIEVING_ITEMS` event.                                            |
+| `startSubscription(item: Item, userData?: string)` | `Android only`. Lanches the billing flow by presenting the Google Store subscription UI interface.                                                                                                     |
+| `restoreOrders(skuType?: string)`                  | Returns the purchase made by the user for each product. You call this method to install purchases on additional devices or restore purchases for an application that the user deleted and reinstalled. |
+| `canMakePayments()`                                | Returns `true` or `false` indicating whether the billing service is available and is setup successfully.                                                                                               |
+| `tearDown()`                                       | Closes the connection to the billing service to free up resources.                                                                                                                                     |
+
 
 ## License
 
