@@ -1,4 +1,4 @@
-import { Application } from '@nativescript/core';
+import { Application, Utils } from '@nativescript/core';
 import { BuyItemOptions, PaymentEvent, _payments$ } from './common';
 import { Failure } from './failure';
 import { Item } from './item';
@@ -19,8 +19,9 @@ export function init(): void {
       result: PaymentEvent.Result.STARTED,
       payload: null,
     });
-    if (Application.android && Application.android.context) {
-      _billingClient = com.android.billingclient.api.BillingClient.newBuilder(Application.android.context)
+    const context = Utils.android.getApplicationContext();
+    if (context) {
+      _billingClient = com.android.billingclient.api.BillingClient.newBuilder(context)
         .enablePendingPurchases()
         .setListener(
           new com.android.billingclient.api.PurchasesUpdatedListener({
