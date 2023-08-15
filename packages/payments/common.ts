@@ -226,10 +226,7 @@ export interface BuyItemOptions {
    */
   accountUserName?: string;
   android?: {
-    /**
-     * Specifies whether to launch a VR purchase flow.
-     */
-    vrPurchase?: boolean;
+    //
   };
   ios?: {
     /**

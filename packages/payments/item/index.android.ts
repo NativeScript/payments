@@ -1,19 +1,20 @@
 import { BaseItem } from './common';
-type SkuDetails = com.android.billingclient.api.SkuDetails;
+type ProductDetails = com.android.billingclient.api.ProductDetails;
 
 export class Item extends BaseItem {
-  public nativeValue: SkuDetails;
+  public nativeValue: ProductDetails;
 
-  constructor(nativeValue: SkuDetails) {
+  constructor(nativeValue: ProductDetails) {
     super(nativeValue);
 
-    this.itemId = nativeValue.getSku();
+    this.itemId = nativeValue.getProductId();
     this.localizedDescription = nativeValue.getDescription();
     this.localizedTitle = nativeValue.getTitle();
-    this.priceAmount = nativeValue.getPriceAmountMicros() / 1000000;
-    this.priceFormatted = nativeValue.getPrice();
-    this.priceCurrencyCode = nativeValue.getPriceCurrencyCode();
-    this.type = nativeValue.getType();
+    const details = nativeValue.getOneTimePurchaseOfferDetails();
+    this.priceAmount = details.getPriceAmountMicros() / 1000000;
+    this.priceFormatted = details.getFormattedPrice();
+    this.priceCurrencyCode = details.getPriceCurrencyCode();
+    this.type = nativeValue.getProductType();
   }
 
   public get debug(): string {
