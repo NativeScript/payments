@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/prefer-namespace-keyword */
 /// <reference path="../node_modules/@nativescript/types-android/index.d.ts"/>
 
 declare module com {
