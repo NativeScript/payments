@@ -194,7 +194,7 @@ export class GooglePayBtn extends View {
 
         paymentMethod['parameters'] =  parameters;
 
-        paymentDataRequest['allowedPaymentMethods'] = paymentMethod;
+        paymentDataRequest['allowedPaymentMethods'] = [paymentMethod];
 
         paymentDataRequest['transactionInfo'] = this._getTransactionInfo(args);
 
