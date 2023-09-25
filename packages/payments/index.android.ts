@@ -205,9 +205,17 @@ export function startOrder(item: Item, skuType: string, buyItemOptions?: BuyItem
 
       const paramsBuilder = com.android.billingclient.api.BillingFlowParams.newBuilder();
 
-      const details = com.android.billingclient.api.BillingFlowParams.ProductDetailsParams.newBuilder()
-      .setProductDetails(item.nativeValue as com.android.billingclient.api.ProductDetails)
-      .build();
+      let details
+      if(skuType == com.android.billingclient.api.BillingClient.SkuType.INAPP) {
+          details = com.android.billingclient.api.BillingFlowParams.ProductDetailsParams.newBuilder()
+          .setProductDetails(item.nativeValue as com.android.billingclient.api.ProductDetails)
+          .build();
+      } else if (skuType == com.android.billingclient.api.BillingClient.SkuType.SUBS) {
+          details = com.android.billingclient.api.BillingFlowParams.ProductDetailsParams.newBuilder()
+          .setProductDetails(item.nativeValue as com.android.billingclient.api.ProductDetails)
+          .setOfferToken(item.offerToken)
+          .build();
+      }
 
       paramsBuilder.setProductDetailsParamsList(java.util.Arrays.asList([details]));
 

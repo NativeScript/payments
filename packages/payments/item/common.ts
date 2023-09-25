@@ -12,6 +12,7 @@ export abstract class BaseItem {
   public priceCurrencyCode: string;
   /** Android only */
   public type: string;
+  public offerToken: string;
   /** iOS only */
   public isFamilyShareable: boolean;
 
