@@ -1,8 +1,8 @@
 import { BaseItem } from './common';
-export declare type SkuDetails = com.android.billingclient.api.SkuDetails;
+export declare type ProductDetails = com.android.billingclient.api.ProductDetails;
 
 export declare class Item extends BaseItem {
   public readonly debug: string | null;
 
-  constructor(nativeValue: SkuDetails | SKProduct);
+  constructor(nativeValue: ProductDetails | SKProduct);
 }

@@ -1,7 +1,7 @@
-export type SkuDetails = com.android.billingclient.api.SkuDetails;
+export type ProductDetails = com.android.billingclient.api.ProductDetails;
 
 export abstract class BaseItem {
-  public nativeValue: SkuDetails | SKProduct;
+  public nativeValue: ProductDetails | SKProduct;
   public abstract readonly debug: string | null;
 
   public itemId: string;
@@ -12,10 +12,11 @@ export abstract class BaseItem {
   public priceCurrencyCode: string;
   /** Android only */
   public type: string;
+  public offerToken: string;
   /** iOS only */
   public isFamilyShareable: boolean;
 
-  constructor(nativeValue: SkuDetails | SKProduct) {
+  constructor(nativeValue: ProductDetails | SKProduct) {
     this.nativeValue = nativeValue;
   }
 }

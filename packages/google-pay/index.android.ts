@@ -6,8 +6,6 @@ import { PaymentsUtil } from './payment-utils.android';
 export * from './enums';
 export * from './interfaces';
 
-const JSONObject = org.json.JSONObject;
-const JSONArray = org.json.JSONArray;
 
 export class GooglePayBtn extends View {
   public cardNetworks: string;
@@ -18,8 +16,8 @@ export class GooglePayBtn extends View {
   private _androidViewId: number;
   private _paymentsClient: com.google.android.gms.wallet.PaymentsClient;
   private _nativeBtn: android.widget.ImageButton;
-  private _cardNetworksJsonArray = new JSONArray();
-  private _authMethodsJsonArray = new JSONArray();
+  private _cardNetworks = [];
+  private _authMethods = [];
   private static TAG = 'GooglePayBtn -';
   private static LOAD_PAYMENT_DATA_REQUEST_CODE = 991;
 
@@ -52,7 +50,7 @@ export class GooglePayBtn extends View {
     const networkJSArray = this.cardNetworks.split(',');
     for (let i = 0; i < networkJSArray.length; i++) {
       const el = networkJSArray[i] as string;
-      this._cardNetworksJsonArray.put(el.trim());
+      this._cardNetworks.push(el.trim());
     }
 
     // Auth Methods handling
@@ -63,26 +61,26 @@ export class GooglePayBtn extends View {
     const authMethodsJSArray = this.authMethods.split(',');
     for (let i = 0; i < authMethodsJSArray.length; i++) {
       const el = authMethodsJSArray[i] as string;
-      this._authMethodsJsonArray.put(el.trim());
+      this._authMethods.push(el.trim());
     }
 
-    const isReadyToPayJson = GooglePayBtn._getIsReadyToPayRequest(this._cardNetworksJsonArray, this._authMethodsJsonArray);
+    const isReadyToPayJson = GooglePayBtn._getIsReadyToPayRequest(this._cardNetworks, this._authMethods);
 
     // not able to use google pay if this happens
-    if (!isReadyToPayJson.isPresent()) {
+    if (!isReadyToPayJson) {
       return;
     }
 
     // The call to isReadyToPay is asynchronous and returns a Task. We need to provide an
     // OnCompleteListener to be triggered when the result of the call is known.
-    const request = com.google.android.gms.wallet.IsReadyToPayRequest.fromJson(isReadyToPayJson.get().toString());
+    const request = com.google.android.gms.wallet.IsReadyToPayRequest.fromJson(JSON.stringify(isReadyToPayJson));
     const task = this._paymentsClient.isReadyToPay(request); // Task<Boolean>
 
     const listener = new (com.google.android.gms as any).tasks.OnCompleteListener({
       onComplete: args => {
         if (args.isSuccessful()) {
           // set the click listener for the native button
-          const clickListener = new ClickListenerImpl(this);
+          const clickListener = new ClickListenerImpl(new WeakRef(this));
           // handle button style/theme
           const ctx = Utils.android.getApplicationContext() as android.content.Context;
           const buttonType = this._mapButtonTypeToNativeValue(this.buttonType);
@@ -130,79 +128,77 @@ export class GooglePayBtn extends View {
   createPaymentRequest(args: GooglePayRequest) {
     return new Promise((resolve, reject) => {
       try {
-        const paymentDataRequest = new JSONObject()
-          // .put('environment', 'TEST')
-          .put('apiVersion', 2)
-          .put('apiVersionMinor', 0);
+        const paymentDataRequest = {
+          apiVersion: 2,
+          apiVersionMinor: 0
+        };
+
+        // paymentDataRequest['environment'] = 'TEST'
 
         if (args.merchantInfo?.merchantName) {
-          paymentDataRequest.put(
-            'merchantInfo', // https://developers.google.com/pay/api/android/reference/request-objects#MerchantInfo
-            new JSONObject().put('merchantName', args.merchantInfo.merchantName)
-          );
+          paymentDataRequest['merchantInfo'] = {
+            merchantName: args.merchantInfo.merchantName
+          }
         }
 
         if (args.emailRequired) {
-          paymentDataRequest.put('emailRequired', args.emailRequired);
+          paymentDataRequest['emailRequired'] = args.emailRequired;
         }
 
         if (args.shippingAddressRequired) {
-          paymentDataRequest.put('shippingAddressRequired', true);
-
-          const countryCodesArray = new JSONArray();
-          args.shippingAddressParameters.allowedCountryCodes.forEach(el => {
-            countryCodesArray.put(el);
-          });
-          paymentDataRequest.put('shippingAddressParameters', new JSONObject().put('allowedCountryCodes', countryCodesArray).put('phoneNumberRequired', args.shippingAddressParameters.phoneNumberRequired));
+          paymentDataRequest['shippingAddressRequired'] = true;
+          const countryCodesArray = args.shippingAddressParameters.allowedCountryCodes ?? [];
+          paymentDataRequest['shippingAddressParameters'] = {
+            allowedCountryCodes: countryCodesArray,
+            phoneNumberRequired: args.shippingAddressParameters.phoneNumberRequired
+          }
         }
 
         // create the payment method
         // payment method array https://developers.google.com/pay/api/android/reference/request-objects#PaymentMethod
-        const paymentMethod = new JSONObject().put('type', args.allowedPaymentMethods.type);
+        const paymentMethod = {type: args.allowedPaymentMethods.type};
 
         // https://developers.google.com/pay/api/android/reference/request-objects#CardParameters
-        const parameters = new JSONObject().put('allowedAuthMethods', this._authMethodsJsonArray).put('allowedCardNetworks', this._cardNetworksJsonArray);
+        const parameters = {allowedAuthMethods: this._authMethods, allowedCardNetworks:  this._cardNetworks };
 
         if (args.allowedPaymentMethods.parameters.allowPrepaidCards) {
-          parameters.put('allowPrepaidCards', args.allowedPaymentMethods.parameters.allowPrepaidCards);
+          parameters['allowPrepaidCards'] = args.allowedPaymentMethods.parameters.allowPrepaidCards;
         }
 
         if (args.allowedPaymentMethods.parameters.allowCreditCards) {
-          parameters.put('allowCreditCards', args.allowedPaymentMethods.parameters.allowCreditCards);
+          parameters['allowCreditCards'] = args.allowedPaymentMethods.parameters.allowCreditCards;
         }
 
         if (args.allowedPaymentMethods.parameters.assuranceDetailsRequired) {
-          parameters.put('assuranceDetailsRequired', args.allowedPaymentMethods.parameters.assuranceDetailsRequired);
+          parameters['assuranceDetailsRequired'] = args.allowedPaymentMethods.parameters.assuranceDetailsRequired;
         }
 
         // Optionally, you can add billing address/phone number associated with a CARD payment method.
         if (args.allowedPaymentMethods.parameters.billingAddressRequired) {
-          parameters.put('billingAddressRequired', true);
-          const billingAddressParameters = new JSONObject();
+          parameters['billingAddressRequired'] = true;
+          const billingAddressParameters = {};
           if (args.allowedPaymentMethods.parameters.billingAddressParameters.format) {
-            billingAddressParameters.put('format', args.allowedPaymentMethods.parameters.billingAddressParameters.format);
+            billingAddressParameters['format'] = args.allowedPaymentMethods.parameters.billingAddressParameters.format;
           }
           if (args.allowedPaymentMethods.parameters.billingAddressParameters.phoneNumberRequired) {
-            billingAddressParameters.put('phoneNumberRequired', args.allowedPaymentMethods.parameters.billingAddressParameters.phoneNumberRequired);
+            billingAddressParameters['phoneNumberRequired'] = args.allowedPaymentMethods.parameters.billingAddressParameters.phoneNumberRequired;
           }
 
-          parameters.put('billingAddressParameters', billingAddressParameters);
+          parameters['billingAddressParameters'] = billingAddressParameters;
         }
 
         if (args.allowedPaymentMethods.tokenizationSpecification) {
-          const tokenSpecification = new JSONObject().put('type', args.allowedPaymentMethods.tokenizationSpecification.type).put('parameters', new JSONObject().put('gateway', args.allowedPaymentMethods.tokenizationSpecification.parameters.gateway).put('gatewayMerchantId', args.allowedPaymentMethods.tokenizationSpecification.parameters.gatewayMerchantId));
-          paymentMethod.put('tokenizationSpecification', tokenSpecification);
+          const tokenSpecification = {type: args.allowedPaymentMethods.tokenizationSpecification.type, parameters: {gateway: args.allowedPaymentMethods.tokenizationSpecification.parameters.gateway, gatewayMerchantId: args.allowedPaymentMethods.tokenizationSpecification.parameters.gatewayMerchantId}};
+          paymentMethod['tokenizationSpecification'] = tokenSpecification;
         }
 
-        paymentMethod.put('parameters', parameters);
+        paymentMethod['parameters'] =  parameters;
 
-        paymentDataRequest.put('allowedPaymentMethods', new JSONArray().put(paymentMethod));
+        paymentDataRequest['allowedPaymentMethods'] = paymentMethod;
 
-        paymentDataRequest.put('transactionInfo', this._getTransactionInfo(args));
+        paymentDataRequest['transactionInfo'] = this._getTransactionInfo(args);
 
-        paymentDataRequest.finalize();
-
-        const request = com.google.android.gms.wallet.PaymentDataRequest.fromJson(paymentDataRequest.toString());
+        const request = com.google.android.gms.wallet.PaymentDataRequest.fromJson(JSON.stringify(paymentDataRequest));
 
         Application.android.on(AndroidApplication.activityResultEvent, this._onActivityResult);
 
@@ -234,44 +230,45 @@ export class GooglePayBtn extends View {
       // value passed in AutoResolveHelper
       switch (args.resultCode) {
         case android.app.Activity.RESULT_OK:
-          const paymentData = com.google.android.gms.wallet.PaymentData.getFromIntent(args.intent) as com.google.android.gms.wallet.PaymentData;
+          {
+            const paymentData = com.google.android.gms.wallet.PaymentData.getFromIntent(args.intent) as com.google.android.gms.wallet.PaymentData;
 
           // Token will be null if PaymentDataRequest was not constructed using fromJson(String).
           const paymentInfo = paymentData.toJson();
           if (paymentInfo === null) {
             return null;
           }
-          const x = new JSONObject(paymentInfo);
+          const x =  JSON.parse(paymentInfo);
 
-          const apiVersion = x.getInt('apiVersion');
-          const apiVersionMinor = x.getInt('apiVersionMinor');
-          const email = x.getString('email');
+          const apiVersion = x.apiVersion;
+          const apiVersionMinor = x.apiVersionMinor;
+          const email = x.email;
           // https://developers.google.com/pay/api/web/reference/response-objects#Address
-          const shippingAddress = x.getJSONObject('shippingAddress');
+          const shippingAddress = x.shippingAddress;
 
           // https://developers.google.com/pay/api/web/reference/response-objects#PaymentMethodData
-          const paymentMethodData = x.getJSONObject('paymentMethodData');
+          const paymentMethodData = x.paymentMethodData;
 
-          const type = paymentMethodData.getString('type');
-          const description = paymentMethodData.getString('description');
-          const info = paymentMethodData.getJSONObject('info');
+          const type = paymentMethodData.type;
+          const description = paymentMethodData.description;
+          const info = paymentMethodData.info;
           // https://developers.google.com/pay/api/web/reference/response-objects#PaymentMethodTokenizationData
-          const tokenizationData = paymentMethodData.getJSONObject('tokenizationData');
-          const tokenType = tokenizationData.getString('type');
+          const tokenizationData = paymentMethodData.tokenizationData;
+          const tokenType = tokenizationData.type;
           // https://developers.google.com/pay/api/web/guides/resources/payment-data-cryptography#payment-method-token-structure
-          const token = tokenizationData.getString('token');
+          const token = tokenizationData.token;
 
           let protocolVersion: string;
           let signature: string;
           let signedMessage: string;
 
           try {
-            // need it as JSONObject to grab the values
-            const tokenAsObject = new JSONObject(token);
+            // need it as JSON Object to grab the values
+            const tokenAsObject = JSON.parse(token);
 
-            protocolVersion = tokenAsObject.getString('protocolVersion');
-            signature = tokenAsObject.getString('signature');
-            signedMessage = tokenAsObject.getString('signedMessage');
+            protocolVersion = tokenAsObject.protocolVersion;
+            signature = tokenAsObject.signature;
+            signedMessage = tokenAsObject.signedMessage;
           } catch (error) {
             // May not be able to parse the token OK if not
             console.log('Unable to parse token:', error);
@@ -302,7 +299,7 @@ export class GooglePayBtn extends View {
               shippingAddress
             }
           } as unknown) as PaymentSuccessEventData);
-
+          }
           break;
         case android.app.Activity.RESULT_CANCELED:
           // The user cancelled the payment attempt
@@ -312,7 +309,8 @@ export class GooglePayBtn extends View {
           } as PaymentCancelledEventData);
           break;
         case com.google.android.gms.wallet.AutoResolveHelper.RESULT_ERROR:
-          const status = com.google.android.gms.wallet.AutoResolveHelper.getStatusFromIntent(args.intent);
+          {
+            const status = com.google.android.gms.wallet.AutoResolveHelper.getStatusFromIntent(args.intent);
           this.notify({
             eventName: GooglePayEvents.PaymentError,
             object: this,
@@ -325,6 +323,7 @@ export class GooglePayBtn extends View {
               statusMessage: status.getStatusMessage()
             }
           } as PaymentErrorEventData);
+          }
           break;
       }
 
@@ -336,69 +335,73 @@ export class GooglePayBtn extends View {
   };
 
   private static _getIsReadyToPayRequest(networks, authMethods) {
+
     try {
-      const cardPaymentMethod = new JSONObject().put('type', 'CARD');
+      const cardPaymentMethod = {type: 'CARD'};
 
-      const parameters = new JSONObject()
-        .put('allowedAuthMethods', authMethods)
-        .put('allowedCardNetworks', networks)
+      const parameters = {
+        allowedAuthMethods: authMethods,
+        allowedCardNetworks: networks,
         // Optionally, you can add billing address/phone number associated with a CARD payment method.
-        .put('billingAddressRequired', true);
+        billingAddressRequired: true
+      }
 
-      const billingAddressParameters = new JSONObject().put('format', 'FULL');
+      const billingAddressParameters = {format: 'FULL'};
 
-      parameters.put('billingAddressParameters', billingAddressParameters);
+      parameters['billingAddressParameters'] = billingAddressParameters;
 
-      cardPaymentMethod.put('parameters', parameters);
+      cardPaymentMethod['parameters'] = parameters;
 
-      const isReadyToPayRequest = new JSONObject()
-        .put('apiVersion', 2)
-        .put('apiVersionMinor', 0)
-        .put('allowedPaymentMethods', new JSONArray().put(cardPaymentMethod));
+      const isReadyToPayRequest = {
+        apiVersion: 2,
+        apiVersionMinor: 0,
+        allowedPaymentMethods: [cardPaymentMethod]
+      };
 
-      return java.util.Optional.of(isReadyToPayRequest);
+      return isReadyToPayRequest;
     } catch (ex) {
       console.log(ex);
-      return java.util.Optional.empty();
+      return null;
     }
   }
 
   private _getTransactionInfo(args: GooglePayRequest) {
-    const transactionInfo = new JSONObject();
+    const transactionInfo = {
+      currencyCode: args.transactionInfo.currencyCode,
+      totalPriceStatus: args.transactionInfo.totalPriceStatus
+    };
 
-    const displayItemsArray = new JSONArray();
+    const displayItemsArray = [];
     // displayItems may not be supported on the GooglePay Android API anymore
     // https://developers.google.com/pay/api/android/reference/request-objects#TransactionInfo
     // it is not listed in the object anymore
     if (args.transactionInfo?.displayItems?.length >= 1) {
       args.transactionInfo.displayItems.forEach(el => {
-        const item = new JSONObject();
-        item
-          .put('label', el.label)
-          .put('type', el.type)
-          .put('price', el.price);
-        displayItemsArray.put(item);
+        const item = {
+          label: el.label,
+          type: el.type,
+          price: el.price
+        };
+        displayItemsArray.push(item);
       });
 
-      transactionInfo.put('displayItems', displayItemsArray);
+      transactionInfo['displayItems'] = displayItemsArray;
     }
 
-    transactionInfo.put('currencyCode', args.transactionInfo.currencyCode);
-    transactionInfo.put('totalPriceStatus', args.transactionInfo.totalPriceStatus);
     if (args.transactionInfo.countryCode) {
-      transactionInfo.put('countryCode', args.transactionInfo.countryCode);
+      transactionInfo['countryCode'] = args.transactionInfo.countryCode;
     }
     if (args.transactionInfo.transactionId) {
-      transactionInfo.put('transactionId', args.transactionInfo.transactionId);
+      transactionInfo['transactionId'] = args.transactionInfo.transactionId;
     }
     if (args.transactionInfo.totalPrice) {
-      transactionInfo.put('totalPrice', args.transactionInfo.totalPrice);
+      transactionInfo['totalPrice']  = args.transactionInfo.totalPrice;
     }
     if (args.transactionInfo.totalPriceLabel) {
-      transactionInfo.put('totalPriceLabel', args.transactionInfo.totalPriceLabel);
+      transactionInfo['totalPriceLabel']  =args.transactionInfo.totalPriceLabel;
     }
     if (args.transactionInfo.checkoutOption) {
-      transactionInfo.put('checkoutOption', args.transactionInfo.checkoutOption);
+      transactionInfo['checkoutOption'] = args.transactionInfo.checkoutOption;
     }
 
     return transactionInfo;
@@ -466,7 +469,7 @@ interface ClickListener {
 @NativeClass()
 @Interfaces([android.view.View.OnClickListener])
 class ClickListenerImpl extends java.lang.Object implements android.view.View.OnClickListener {
-  constructor(public owner: GooglePayBtn) {
+  constructor(public owner: WeakRef<GooglePayBtn>) {
     super();
     return global.__native(this);
   }
@@ -474,6 +477,6 @@ class ClickListenerImpl extends java.lang.Object implements android.view.View.On
   onClick(v: android.view.View): void {
     // Disable the Google Pay payment button.
     // v.setClickable(false);
-    this.owner?._emit('tap');
+    this.owner?.get()?._emit('tap');
   }
 }
