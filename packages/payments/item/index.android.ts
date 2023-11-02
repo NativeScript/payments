@@ -19,10 +19,16 @@ export class Item extends BaseItem {
     } else if (this.type === com.android.billingclient.api.BillingClient.SkuType.SUBS) {
         const subscriptionOfferDetails = nativeValue.getSubscriptionOfferDetails().get(0)
         this.offerToken = subscriptionOfferDetails.getOfferToken();
-        const details = subscriptionOfferDetails.getPricingPhases().getPricingPhaseList().get(0);
-        this.priceAmount = details.getPriceAmountMicros() / 1000000;
-        this.priceFormatted = details.getFormattedPrice();
-        this.priceCurrencyCode = details.getPriceCurrencyCode();
+        const pricingPhaseList = subscriptionOfferDetails.getPricingPhases().getPricingPhaseList();
+        for (let i = 0; i < pricingPhaseList.size(); i++) {
+            let details = pricingPhaseList.get(pricingPhaseList.size() - 1);
+            if (details.getPriceAmountMicros() > 0) {
+                this.priceAmount = details.getPriceAmountMicros() / 1000000;
+                this.priceFormatted = details.getFormattedPrice();
+                this.priceCurrencyCode = details.getPriceCurrencyCode();
+                break;
+            }
+        }
     }
   }
 
