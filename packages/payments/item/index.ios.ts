@@ -1,4 +1,5 @@
 import { BaseItem } from './common';
+export { RecurrenceMode } from './common';
 
 export class Item extends BaseItem {
   public nativeValue: SKProduct;
