@@ -226,7 +226,15 @@ export interface BuyItemOptions {
    */
   accountUserName?: string;
   android?: {
-    //
+    /**
+     *  Specifies an optional obfuscated string that is uniquely associated with the user's account in your app.
+     */
+    obfuscatedAccountId?: string;
+
+    /**
+     *  Specifies an optional obfuscated string that is uniquely associated with the user's profile in your app.
+     */
+    obfuscatedProfileId?: string;
   };
   ios?: {
     /**

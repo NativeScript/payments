@@ -149,7 +149,8 @@ export function fetchProducts(itemIds: Array<string>, skuType: string) {
         const responseCode = result.getResponseCode();
           if (responseCode === com.android.billingclient.api.BillingClient.BillingResponseCode.OK) {
             const products = [];
-            for (let i = 0; i < detailsList.size(); i++) {
+            const size = detailsList.size();
+            for (let i = 0; i < size; i++) {
               products.push(new Item(detailsList.get(i)));
             }
             _payments$.next({
@@ -220,9 +221,16 @@ export function startOrder(item: Item, skuType: string, buyItemOptions?: BuyItem
       paramsBuilder.setProductDetailsParamsList(java.util.Arrays.asList([details]));
 
       if (buyItemOptions) {
-        paramsBuilder.setObfuscatedProfileId(buyItemOptions?.accountUserName);
-        if (buyItemOptions.android) {
-          // noop
+        if (buyItemOptions?.accountUserName) {
+          paramsBuilder.setObfuscatedProfileId(buyItemOptions?.accountUserName);
+        }
+
+        if (buyItemOptions?.android?.obfuscatedProfileId) {
+          paramsBuilder.setObfuscatedProfileId(buyItemOptions?.accountUserName);
+        }
+
+        if (buyItemOptions?.android?.obfuscatedAccountId) {
+          paramsBuilder.setObfuscatedAccountId(buyItemOptions?.accountUserName);
         }
       }
       const result = _billingClient.launchBillingFlow(Application.android.foregroundActivity, paramsBuilder.build());
@@ -375,7 +383,8 @@ export function restoreOrders(skuType?: string): void {
         onPurchaseHistoryResponse: (result, purchasesList) => {
           const responseCode = result.getResponseCode();
           if (responseCode === com.android.billingclient.api.BillingClient.BillingResponseCode.OK) {
-            for (let i = 0; i < purchasesList.size(); i++) {
+            const size = purchasesList.size();
+            for (let i = 0; i < size; i++) {
               const purchase: com.android.billingclient.api.PurchaseHistoryRecord = purchasesList.get(i);
               if (purchase) {
                 _payments$.next({
@@ -427,8 +436,9 @@ function _purchaseHandler(responseCode: number, purchases: List<com.android.bill
         onQueryPurchasesResponse(param0: com.android.billingclient.api.BillingResult, pending: java.util.List<com.android.billingclient.api.Purchase>){
 
           if (responseCode === com.android.billingclient.api.BillingClient.BillingResponseCode.OK) {
-            if (purchases && purchases.size()) {
-              for (let i = 0; i < purchases.size(); i++) {
+            const size = purchases?.size?.() ?? 0;
+            if (purchases && size) {
+              for (let i = 0; i < size; i++) {
                 const purchase: com.android.billingclient.api.Purchase | com.android.billingclient.api.PurchaseHistoryRecord = purchases.get(i);
                 if (purchase) {
                   const order = new Order(purchase, false);
