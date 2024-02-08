@@ -182,7 +182,8 @@ class SKProductRequestDelegateImpl extends NSObject implements SKProductsRequest
     }
 
     const result: Array<Item> = [];
-    for (let i = 0; i < products.count; i++) {
+    const count = products.count;
+    for (let i = 0; i < count; i++) {
       result.push(new Item(products.objectAtIndex(i)));
     }
 
@@ -269,8 +270,9 @@ function _transactionHandler(queue: SKPaymentQueue, transactions: NSArray<SKPaym
     result: PaymentEvent.Result.PENDING,
     payload: queue.transactions ? queue.transactions.count : 0,
   });
-  if (transactions && transactions.count) {
-    for (let i = 0; i < transactions.count; i++) {
+  const count = transactions?.count ?? 0;
+  if (count) {
+    for (let i = 0; i < count; i++) {
       const transaction: SKPaymentTransaction = transactions.objectAtIndex(i);
 
       switch (transaction.transactionState) {
