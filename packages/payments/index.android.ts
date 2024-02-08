@@ -222,15 +222,15 @@ export function startOrder(item: Item, skuType: string, buyItemOptions?: BuyItem
 
       if (buyItemOptions) {
         if (buyItemOptions?.accountUserName) {
-          paramsBuilder.setObfuscatedProfileId(buyItemOptions?.accountUserName);
+          paramsBuilder.setObfuscatedProfileId(buyItemOptions.accountUserName);
         }
 
         if (buyItemOptions?.android?.obfuscatedProfileId) {
-          paramsBuilder.setObfuscatedProfileId(buyItemOptions?.accountUserName);
+          paramsBuilder.setObfuscatedProfileId(buyItemOptions.android.obfuscatedProfileId);
         }
 
         if (buyItemOptions?.android?.obfuscatedAccountId) {
-          paramsBuilder.setObfuscatedAccountId(buyItemOptions?.accountUserName);
+          paramsBuilder.setObfuscatedAccountId(buyItemOptions.android.obfuscatedAccountId);
         }
       }
       const result = _billingClient.launchBillingFlow(Application.android.foregroundActivity, paramsBuilder.build());
