@@ -21,14 +21,15 @@ export class Item extends BaseItem {
       const subscriptionOfferDetails: com.android.billingclient.api.ProductDetails.SubscriptionOfferDetails = nativeValue.getSubscriptionOfferDetails().get(0);
       this.offerToken = subscriptionOfferDetails.getOfferToken();
       const pricingPhaseList = subscriptionOfferDetails.getPricingPhases().getPricingPhaseList();
-      for (let i = 0; i < pricingPhaseList.size(); i++) {
+      const listSize = pricingPhaseList.size();
+      for (let i = 0; i < listSize; i++) {
         const details: com.android.billingclient.api.ProductDetails.PricingPhase = pricingPhaseList.get(i);
         // what matters is the final price. For example:
         // 3 months free trial
         // 6 months at $1.99
         // rest is $9.99
         // the sub price is $9.99
-        if (i === pricingPhaseList.size() - 1) {
+        if (i === listSize - 1) {
           this.priceAmount = details.getPriceAmountMicros() / 1000000;
           this.priceFormatted = details.getFormattedPrice();
           this.priceCurrencyCode = details.getPriceCurrencyCode();
