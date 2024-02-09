@@ -1,4 +1,10 @@
-export type ProductDetails = com.android.billingclient.api.ProductDetails;
+type ProductDetails = com.android.billingclient.api.ProductDetails;
+
+export enum RecurrenceMode {
+  FINITE_RECURRING = 2,
+  INFINITE_RECURRING = 1,
+  NON_RECURRING = 3,
+}
 
 export abstract class BaseItem {
   public nativeValue: ProductDetails | SKProduct;
@@ -13,6 +19,14 @@ export abstract class BaseItem {
   /** Android only */
   public type: string;
   public offerToken: string;
+  public pricingPhases: Array<{
+    priceAmount: number;
+    priceFormatted: string;
+    priceCurrencyCode: string;
+    billingPeriod: string;
+    billingCycleCount: number;
+    recurrenceMode: RecurrenceMode;
+  }> = [];
   /** iOS only */
   public isFamilyShareable: boolean;
 

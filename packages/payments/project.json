@@ -14,6 +14,7 @@
         "assets": [
           "packages/payments/*.md",
           "packages/payments/index.d.ts",
+          "packages/payments/typings/*.d.ts",
           "LICENSE",
           {
             "glob": "**/*",
