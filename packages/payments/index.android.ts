@@ -134,19 +134,20 @@ export function fetchProducts(itemIds: Array<string>, skuType: string) {
     // params.setSkusList(skuList).setType(skuType);
 
     const details = com.android.billingclient.api.QueryProductDetailsParams.newBuilder()
-    .setProductList(
-      java.util.Arrays.asList(itemIds.map(id => {
-        return com.android.billingclient.api.QueryProductDetailsParams.Product.newBuilder()
-        .setProductId(id)
-        .setProductType(skuType)
-        .build()
-      })
-    ))
-    .build();
+      .setProductList(
+        java.util.Arrays.asList(
+          itemIds.map((id) => {
+            return com.android.billingclient.api.QueryProductDetailsParams.Product.newBuilder().setProductId(id).setProductType(skuType).build();
+          })
+        )
+      )
+      .build();
 
-    _billingClient.queryProductDetailsAsync(details, new com.android.billingclient.api.ProductDetailsResponseListener({
-      onProductDetailsResponse(result: com.android.billingclient.api.BillingResult, detailsList: java.util.List<com.android.billingclient.api.ProductDetails>){
-        const responseCode = result.getResponseCode();
+    _billingClient.queryProductDetailsAsync(
+      details,
+      new com.android.billingclient.api.ProductDetailsResponseListener({
+        onProductDetailsResponse(result: com.android.billingclient.api.BillingResult, detailsList: java.util.List<com.android.billingclient.api.ProductDetails>) {
+          const responseCode = result.getResponseCode();
           if (responseCode === com.android.billingclient.api.BillingClient.BillingResponseCode.OK) {
             const products = [];
             const size = detailsList.size();
@@ -167,10 +168,10 @@ export function fetchProducts(itemIds: Array<string>, skuType: string) {
               payload: new Failure(responseCode),
             });
           }
-      }
-    }));
+        },
+      })
+    );
 
- 
     _payments$.next({
       context: PaymentEvent.Context.RETRIEVING_ITEMS,
       result: PaymentEvent.Result.PENDING,
@@ -191,73 +192,75 @@ export function startSubscription(item: Item, buyItemOptions?: BuyItemOptions) {
 export function startOrder(item: Item, skuType: string, buyItemOptions?: BuyItemOptions) {
   if (_billingClient) {
     let pendingCount = 0;
-    _billingClient.queryPurchasesAsync(skuType, new com.android.billingclient.api.PurchasesResponseListener({
-      onQueryPurchasesResponse(result: com.android.billingclient.api.BillingResult, pending: java.util.List<com.android.billingclient.api.Purchase>){
-       // const pending = _billingClient.queryPurchases(skuType).getPurchasesList();
-    if (pending) {
-      pendingCount = pending.size();
-    }
-    if (!pendingCount) {
-      _payments$.next({
-        context: PaymentEvent.Context.PROCESSING_ORDER,
-        result: PaymentEvent.Result.PENDING,
-        payload: pendingCount + 1,
-      });
+    _billingClient.queryPurchasesAsync(
+      skuType,
+      new com.android.billingclient.api.PurchasesResponseListener({
+        onQueryPurchasesResponse(result: com.android.billingclient.api.BillingResult, pending: java.util.List<com.android.billingclient.api.Purchase>) {
+          // const pending = _billingClient.queryPurchases(skuType).getPurchasesList();
+          if (pending) {
+            pendingCount = pending.size();
+          }
+          if (!pendingCount) {
+            _payments$.next({
+              context: PaymentEvent.Context.PROCESSING_ORDER,
+              result: PaymentEvent.Result.PENDING,
+              payload: pendingCount + 1,
+            });
 
-      const paramsBuilder = com.android.billingclient.api.BillingFlowParams.newBuilder();
+            const paramsBuilder = com.android.billingclient.api.BillingFlowParams.newBuilder();
 
-      let details
-      if(skuType == com.android.billingclient.api.BillingClient.SkuType.INAPP) {
-          details = com.android.billingclient.api.BillingFlowParams.ProductDetailsParams.newBuilder()
-          .setProductDetails(item.nativeValue as com.android.billingclient.api.ProductDetails)
-          .build();
-      } else if (skuType == com.android.billingclient.api.BillingClient.SkuType.SUBS) {
-          details = com.android.billingclient.api.BillingFlowParams.ProductDetailsParams.newBuilder()
-          .setProductDetails(item.nativeValue as com.android.billingclient.api.ProductDetails)
-          .setOfferToken(item.offerToken)
-          .build();
-      }
+            let details;
+            if (skuType == com.android.billingclient.api.BillingClient.SkuType.INAPP) {
+              details = com.android.billingclient.api.BillingFlowParams.ProductDetailsParams.newBuilder()
+                .setProductDetails(item.nativeValue as com.android.billingclient.api.ProductDetails)
+                .build();
+            } else if (skuType == com.android.billingclient.api.BillingClient.SkuType.SUBS) {
+              details = com.android.billingclient.api.BillingFlowParams.ProductDetailsParams.newBuilder()
+                .setProductDetails(item.nativeValue as com.android.billingclient.api.ProductDetails)
+                .setOfferToken(item.offerToken)
+                .build();
+            }
 
-      paramsBuilder.setProductDetailsParamsList(java.util.Arrays.asList([details]));
+            paramsBuilder.setProductDetailsParamsList(java.util.Arrays.asList([details]));
 
-      if (buyItemOptions) {
-        if (buyItemOptions?.accountUserName) {
-          paramsBuilder.setObfuscatedProfileId(buyItemOptions.accountUserName);
-        }
+            if (buyItemOptions) {
+              if (buyItemOptions?.accountUserName) {
+                paramsBuilder.setObfuscatedProfileId(buyItemOptions.accountUserName);
+              }
 
-        if (buyItemOptions?.android?.obfuscatedProfileId) {
-          paramsBuilder.setObfuscatedProfileId(buyItemOptions.android.obfuscatedProfileId);
-        }
+              if (buyItemOptions?.android?.obfuscatedProfileId) {
+                paramsBuilder.setObfuscatedProfileId(buyItemOptions.android.obfuscatedProfileId);
+              }
 
-        if (buyItemOptions?.android?.obfuscatedAccountId) {
-          paramsBuilder.setObfuscatedAccountId(buyItemOptions.android.obfuscatedAccountId);
-        }
-      }
-      const result = _billingClient.launchBillingFlow(Application.android.foregroundActivity, paramsBuilder.build());
-      const responseCode = result.getResponseCode();
-      if (responseCode === com.android.billingclient.api.BillingClient.BillingResponseCode.OK) {
-        _payments$.next({
-          context: PaymentEvent.Context.PROCESSING_ORDER,
-          result: PaymentEvent.Result.STARTED,
-          payload: item,
-        });
-      } else {
-        _payments$.next({
-          context: PaymentEvent.Context.PROCESSING_ORDER,
-          result: PaymentEvent.Result.FAILURE,
-          payload: new Failure(responseCode),
-        });
-      }
-    } else {
-      _payments$.next({
-        context: PaymentEvent.Context.PROCESSING_ORDER,
-        result: PaymentEvent.Result.PENDING,
-        payload: pendingCount,
-      });
-    }
-      }
-    }));
-    
+              if (buyItemOptions?.android?.obfuscatedAccountId) {
+                paramsBuilder.setObfuscatedAccountId(buyItemOptions.android.obfuscatedAccountId);
+              }
+            }
+            const result = _billingClient.launchBillingFlow(Application.android.foregroundActivity, paramsBuilder.build());
+            const responseCode = result.getResponseCode();
+            if (responseCode === com.android.billingclient.api.BillingClient.BillingResponseCode.OK) {
+              _payments$.next({
+                context: PaymentEvent.Context.PROCESSING_ORDER,
+                result: PaymentEvent.Result.STARTED,
+                payload: item,
+              });
+            } else {
+              _payments$.next({
+                context: PaymentEvent.Context.PROCESSING_ORDER,
+                result: PaymentEvent.Result.FAILURE,
+                payload: new Failure(responseCode),
+              });
+            }
+          } else {
+            _payments$.next({
+              context: PaymentEvent.Context.PROCESSING_ORDER,
+              result: PaymentEvent.Result.PENDING,
+              payload: pendingCount,
+            });
+          }
+        },
+      })
+    );
   } else {
     console.error(new Error('BillingClient missing.'));
   }
@@ -298,11 +301,6 @@ export function finalizeOrder(order: Order): void {
           },
         })
       );
-      _payments$.next({
-        context: PaymentEvent.Context.FINALIZING_ORDER,
-        result: PaymentEvent.Result.SUCCESS,
-        payload: new Order(order.nativeValue, order.restored),
-      });
     } else {
       _payments$.next({
         context: PaymentEvent.Context.FINALIZING_ORDER,
@@ -331,16 +329,18 @@ export function finalizeOrder(order: Order): void {
                   });
                 }
 
-
-                _billingClient.queryPurchasesAsync(com.android.billingclient.api.BillingClient.SkuType.INAPP, new com.android.billingclient.api.PurchasesResponseListener({
-                  onQueryPurchasesResponse(param0: com.android.billingclient.api.BillingResult, pending: java.util.List<com.android.billingclient.api.Purchase>){
-                    _payments$.next({
-                      context: PaymentEvent.Context.PROCESSING_ORDER,
-                      result: PaymentEvent.Result.PENDING,
-                      payload: pending ? pending.size() : 0,
-                    });
-                  }
-                }));
+                _billingClient.queryPurchasesAsync(
+                  com.android.billingclient.api.BillingClient.SkuType.INAPP,
+                  new com.android.billingclient.api.PurchasesResponseListener({
+                    onQueryPurchasesResponse(param0: com.android.billingclient.api.BillingResult, pending: java.util.List<com.android.billingclient.api.Purchase>) {
+                      _payments$.next({
+                        context: PaymentEvent.Context.PROCESSING_ORDER,
+                        result: PaymentEvent.Result.PENDING,
+                        payload: pending ? pending.size() : 0,
+                      });
+                    },
+                  })
+                );
               } else {
                 console.error(new Error('BillingClient missing.'));
               }
@@ -432,36 +432,36 @@ function _purchaseHandler(responseCode: number, purchases: List<com.android.bill
   if (_billingClient) {
     const pending = purchases;
     if (!skuType) {
-      _billingClient.queryPurchasesAsync(com.android.billingclient.api.BillingClient.SkuType.INAPP, new com.android.billingclient.api.PurchasesResponseListener({
-        onQueryPurchasesResponse(param0: com.android.billingclient.api.BillingResult, pending: java.util.List<com.android.billingclient.api.Purchase>){
-
-          if (responseCode === com.android.billingclient.api.BillingClient.BillingResponseCode.OK) {
-            const size = purchases?.size?.() ?? 0;
-            if (purchases && size) {
-              for (let i = 0; i < size; i++) {
-                const purchase: com.android.billingclient.api.Purchase | com.android.billingclient.api.PurchaseHistoryRecord = purchases.get(i);
-                if (purchase) {
-                  const order = new Order(purchase, false);
-                  // order.isSubscription = isSubscription;
-                  _payments$.next({
-                    context: PaymentEvent.Context.PROCESSING_ORDER,
-                    result: PaymentEvent.Result.SUCCESS,
-                    payload: order,
-                  });
+      _billingClient.queryPurchasesAsync(
+        com.android.billingclient.api.BillingClient.SkuType.INAPP,
+        new com.android.billingclient.api.PurchasesResponseListener({
+          onQueryPurchasesResponse(param0: com.android.billingclient.api.BillingResult, pending: java.util.List<com.android.billingclient.api.Purchase>) {
+            if (responseCode === com.android.billingclient.api.BillingClient.BillingResponseCode.OK) {
+              const size = purchases?.size?.() ?? 0;
+              if (purchases && size) {
+                for (let i = 0; i < size; i++) {
+                  const purchase: com.android.billingclient.api.Purchase | com.android.billingclient.api.PurchaseHistoryRecord = purchases.get(i);
+                  if (purchase) {
+                    const order = new Order(purchase, false);
+                    // order.isSubscription = isSubscription;
+                    _payments$.next({
+                      context: PaymentEvent.Context.PROCESSING_ORDER,
+                      result: PaymentEvent.Result.SUCCESS,
+                      payload: order,
+                    });
+                  }
                 }
               }
+            } else {
+              _payments$.next({
+                context: PaymentEvent.Context.PROCESSING_ORDER,
+                result: PaymentEvent.Result.FAILURE,
+                payload: new Failure(responseCode),
+              });
             }
-          } else {
-            _payments$.next({
-              context: PaymentEvent.Context.PROCESSING_ORDER,
-              result: PaymentEvent.Result.FAILURE,
-              payload: new Failure(responseCode),
-            });
-          }
-
-          
-        }
-      }));
+          },
+        })
+      );
     }
     // var isSubscription = skuType === com.android.billingclient.api.BillingClient.SkuType.SUBS;
     _payments$.next({
