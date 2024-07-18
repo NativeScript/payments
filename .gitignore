@@ -43,3 +43,6 @@ Thumbs.db
 *.tgz
 packages/**/angular/dist
 packages/*/platforms/android/*.aar
+
+.nx/cache
+.nx/workspace-data

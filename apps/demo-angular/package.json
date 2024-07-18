@@ -7,7 +7,7 @@
     "@nativescript/apple-pay": "file:../../dist/packages/apple-pay"
   },
   "devDependencies": {
-    "@nativescript/android": "~8.4.0",
-    "@nativescript/ios": "~8.4.0"
+    "@nativescript/android": "~8.8.0",
+    "@nativescript/ios": "~8.8.0"
   }
 }

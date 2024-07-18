@@ -2,15 +2,38 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "paths": {
-      "~/*": ["src/*"],
-      "@demo/shared": ["tools/demo/index.ts"],
-      "@nativescript/payments": ["packages/payments/index.d.ts"],
-      "@nativescript/google-pay": ["packages/google-pay/index.d.ts"],
-      "@nativescript/google-pay/angular": ["packages/google-pay/angular/index.ts"],
-      "@nativescript/apple-pay": ["packages/apple-pay/index.d.ts"],
-      "@nativescript/apple-pay/angular": ["packages/apple-pay/angular/index.ts"]
+      "~/*": [
+        "src/*"
+      ],
+      "@demo/shared": [
+        "tools/demo/index.ts"
+      ],
+      "@nativescript/payments": [
+        "packages/payments/index.d.ts"
+      ],
+      "@nativescript/google-pay": [
+        "packages/google-pay/index.d.ts"
+      ],
+      "@nativescript/google-pay/angular": [
+        "packages/google-pay/angular/index.ts"
+      ],
+      "@nativescript/apple-pay": [
+        "packages/apple-pay/index.d.ts"
+      ],
+      "@nativescript/apple-pay/angular": [
+        "packages/apple-pay/angular/index.ts"
+      ],
+      "@nativescript/*": [
+        "../../dist/packages/*"
+      ]
     }
   },
-  "files": ["./references.d.ts", "./src/main.ts", "./src/polyfills.ts"],
-  "include": ["../../packages/**/references.d.ts"]
+  "files": [
+    "./references.d.ts",
+    "./src/main.ts",
+    "./src/polyfills.ts"
+  ],
+  "include": [
+    "../../packages/**/references.d.ts"
+  ]
 }

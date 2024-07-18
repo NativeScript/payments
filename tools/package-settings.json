@@ -1,0 +1,23 @@
+{
+  "name": "@nativescript",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NativeScript/payments.git"
+  },
+  "keywords": [
+    "NativeScript",
+    "JavaScript",
+    "TypeScript",
+    "iOS",
+    "Android"
+  ],
+  "author": {
+    "name": "NativeScript",
+    "email": "oss@nativescript.org"
+  },
+  "bugs": {
+    "url": "https://github.com/NativeScript/payments/issues"
+  },
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/NativeScript/payments"
+}

@@ -5,7 +5,7 @@
   "sourceRoot": "packages/payments",
   "targets": {
     "build": {
-      "executor": "@nrwl/js:tsc",
+      "executor": "@nx/js:tsc",
       "options": {
         "outputPath": "dist/packages/payments",
         "tsConfig": "packages/payments/tsconfig.json",
@@ -41,7 +41,7 @@
       "dependsOn": [
         {
           "target": "build.all",
-          "projects": "dependencies"
+          "dependencies": true
         }
       ]
     },
@@ -55,11 +55,10 @@
       "dependsOn": [
         {
           "target": "build.all",
-          "projects": "dependencies"
+          "dependencies": true
         },
         {
-          "target": "build",
-          "projects": "self"
+          "target": "build"
         }
       ]
     },
@@ -71,10 +70,7 @@
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
-      "options": {
-        "lintFilePatterns": ["packages/payments/**/*.ts"]
-      }
+      "executor": "@nx/eslint:lint"
     }
   }
 }
