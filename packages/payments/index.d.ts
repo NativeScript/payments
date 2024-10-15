@@ -17,7 +17,7 @@ export declare function buyItem(item: Item, options?: BuyItemOptions): void;
 
 export function fetchSubscriptions(itemIds: Array<string>): void;
 
-export function startSubscription(item: Item, userData?: string): void;
+export function startSubscription(item: Item, options?: BuyItemOptions): void;
 
 export declare function finalizeOrder(order: Order): void;
 

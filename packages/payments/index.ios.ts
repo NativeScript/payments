@@ -51,6 +51,10 @@ export function tearDown(): void {
   _paymentTransactionObserver = null;
 }
 
+export function fetchSubscriptions(itemIds: Array<string>): void {
+  fetchItems(itemIds);
+}
+
 export function fetchItems(itemIds: Array<string>): void {
   _payments$.next({
     context: PaymentEvent.Context.RETRIEVING_ITEMS,
@@ -68,6 +72,10 @@ export function fetchItems(itemIds: Array<string>): void {
     result: PaymentEvent.Result.PENDING,
     payload: itemIds,
   });
+}
+
+export function startSubscription(item: Item, options?: BuyItemOptions): void {
+  buyItem(item, options);
 }
 
 export function buyItem(item: Item, buyItemOptions: BuyItemOptions): void {

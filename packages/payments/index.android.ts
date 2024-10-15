@@ -185,11 +185,11 @@ export function fetchProducts(itemIds: Array<string>, skuType: string) {
 export function buyItem(item: Item, buyItemOptions?: BuyItemOptions): void {
   startOrder(item, com.android.billingclient.api.BillingClient.SkuType.INAPP, buyItemOptions);
 }
-export function startSubscription(item: Item, buyItemOptions?: BuyItemOptions) {
-  startOrder(item, com.android.billingclient.api.BillingClient.SkuType.SUBS, buyItemOptions);
+export function startSubscription(item: Item, options?: BuyItemOptions) {
+  startOrder(item, com.android.billingclient.api.BillingClient.SkuType.SUBS, options);
 }
 
-export function startOrder(item: Item, skuType: string, buyItemOptions?: BuyItemOptions) {
+export function startOrder(item: Item, skuType: string, options?: BuyItemOptions) {
   if (_billingClient) {
     let pendingCount = 0;
     _billingClient.queryPurchasesAsync(
@@ -223,17 +223,17 @@ export function startOrder(item: Item, skuType: string, buyItemOptions?: BuyItem
 
             paramsBuilder.setProductDetailsParamsList(java.util.Arrays.asList([details]));
 
-            if (buyItemOptions) {
-              if (buyItemOptions?.accountUserName) {
-                paramsBuilder.setObfuscatedProfileId(buyItemOptions.accountUserName);
+            if (options) {
+              if (options?.accountUserName) {
+                paramsBuilder.setObfuscatedProfileId(options.accountUserName);
               }
 
-              if (buyItemOptions?.android?.obfuscatedProfileId) {
-                paramsBuilder.setObfuscatedProfileId(buyItemOptions.android.obfuscatedProfileId);
+              if (options?.android?.obfuscatedProfileId) {
+                paramsBuilder.setObfuscatedProfileId(options.android.obfuscatedProfileId);
               }
 
-              if (buyItemOptions?.android?.obfuscatedAccountId) {
-                paramsBuilder.setObfuscatedAccountId(buyItemOptions.android.obfuscatedAccountId);
+              if (options?.android?.obfuscatedAccountId) {
+                paramsBuilder.setObfuscatedAccountId(options.android.obfuscatedAccountId);
               }
             }
             const result = _billingClient.launchBillingFlow(Application.android.foregroundActivity, paramsBuilder.build());
