@@ -1,6 +1,6 @@
 {
   "name": "@nativescript/payments",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "In-App Purchase and Subscriptions for NativeScript",
   "main": "index",
   "typings": "index.d.ts",
