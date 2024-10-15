@@ -9,10 +9,7 @@
     "noEmitHelpers": true,
     "target": "ES2020",
     "module": "ESNext",
-    "lib": [
-      "ESNext",
-      "dom"
-    ],
+    "lib": ["ESNext", "dom"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
@@ -23,31 +20,14 @@
       }
     ],
     "paths": {
-      "@demo/shared": [
-        "tools/demo/index.ts"
-      ],
-      "@nativescript/apple-pay": [
-        "packages/apple-pay/index.d.ts"
-      ],
-      "@nativescript/apple-pay/angular": [
-        "packages/apple-pay/angular/index.ts"
-      ],
-      "@nativescript/google-pay": [
-        "packages/google-pay/index.d.ts"
-      ],
-      "@nativescript/google-pay/angular": [
-        "packages/google-pay/angular/index.ts"
-      ],
-      "@nativescript/payments": [
-        "packages/payments/index.d.ts"
-      ],
-      "@nativescript/*": [
-        "packages/*"
-      ]
+      "@demo/shared": ["tools/demo/index.ts"],
+      "@nativescript/*": ["packages/*"],
+      "@nativescript/apple-pay": ["packages/apple-pay/index.d.ts"],
+      "@nativescript/apple-pay/angular": ["packages/apple-pay/angular/index.ts"],
+      "@nativescript/google-pay": ["packages/google-pay/index.d.ts"],
+      "@nativescript/google-pay/angular": ["packages/google-pay/angular/index.ts"],
+      "@nativescript/payments": ["packages/payments/index.d.ts"]
     }
   },
-  "exclude": [
-    "node_modules",
-    "tmp"
-  ]
+  "exclude": ["node_modules", "tmp"]
 }
