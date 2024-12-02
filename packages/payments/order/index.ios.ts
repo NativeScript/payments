@@ -29,7 +29,7 @@ export class Order extends BaseOrder {
     this.orderId = nativeValue.transactionIdentifier;
     this.orderDate = nativeValue.transactionDate;
     const receiptData = NSData.dataWithContentsOfURL(NSBundle.mainBundle.appStoreReceiptURL);
-    this.receiptToken = receiptData ? receiptData.base64EncodedStringWithOptions(0) : undefined;
+    this.receiptToken = receiptData ? receiptData.base64EncodedStringWithOptions(NSDataBase64EncodingOptions.Encoding64CharacterLineLength) : undefined;
     // this.receiptToken = nativeValue.transactionReceipt ? nativeValue.transactionReceipt.base64EncodedStringWithOptions(NSDataBase64EncodingOptions.Encoding64CharacterLineLength) : 'undefined';
     this.userData = nativeValue.payment ? nativeValue.payment.applicationUsername : 'undefined';
   }
