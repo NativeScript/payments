@@ -1,0 +1,30 @@
+repositories {
+  google()
+  maven {
+    url 'https://sdk.squareup.com/public/android'
+  }
+}
+
+dependencies {
+  implementation "com.squareup.sdk.in-app-payments:card-entry:1.6.6"
+}
+
+android {
+  defaultConfig {
+    minSdkVersion 24
+  }
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+  }
+  // buildTypes {
+  //   debug {
+  //     minifyEnabled true
+  //     proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+  //   }
+  //   release {
+  //     minifyEnabled true
+  //     proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+  //   }
+  // }
+}

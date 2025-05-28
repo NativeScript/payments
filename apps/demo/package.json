@@ -8,7 +8,8 @@
     "@nativescript/payments": "file:../../packages/payments",
     "rxjs": "~7.3.1",
     "@nativescript/apple-pay": "file:../../packages/apple-pay",
-    "@nativescript/google-pay": "file:../../packages/google-pay"
+    "@nativescript/google-pay": "file:../../packages/google-pay",
+    "@nativescript/square-in-app-payments": "file:../../packages/square-in-app-payments"
   },
   "devDependencies": {
     "@nativescript/android": "~8.9.0",
