@@ -23,15 +23,15 @@ module.exports = {
       },
       demo: {
         clean: {
-          script: 'nx run demo:clean',
+          script: 'nx clean demo',
           description: '⚆  Clean  🧹',
         },
         ios: {
-          script: 'nx run demo:ios',
+          script: 'nx debug demo ios',
           description: '⚆  Run iOS  ',
         },
         android: {
-          script: 'nx run demo:android',
+          script: 'nx debug demo android',
           description: '⚆  Run Android  🤖',
         },
       },

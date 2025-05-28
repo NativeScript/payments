@@ -5,9 +5,9 @@
   <StackLayout class="p-20">
     <ScrollView class="h-full">
       <StackLayout>
-        <Button text="apple-pay" tap="{{ viewDemo }}" class="btn btn-primary view-demo"/>
-        <Button text="google-pay" tap="{{ viewDemo }}" class="btn btn-primary view-demo"/>
-        <Button text="payments" tap="{{ viewDemo }}" class="btn btn-primary view-demo"/>
+        <Button text="apple-pay" tap="{{ viewDemo }}" class="btn btn-primary rounded view-demo"/>
+        <Button text="google-pay" tap="{{ viewDemo }}" class="btn btn-primary rounded view-demo"/>
+        <Button text="payments" tap="{{ viewDemo }}" class="btn btn-primary rounded view-demo"/>
       </StackLayout>
     </ScrollView>
   </StackLayout>
