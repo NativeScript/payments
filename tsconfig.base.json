@@ -26,7 +26,8 @@
       "@nativescript/apple-pay/angular": ["packages/apple-pay/angular/index.ts"],
       "@nativescript/google-pay": ["packages/google-pay/index.d.ts"],
       "@nativescript/google-pay/angular": ["packages/google-pay/angular/index.ts"],
-      "@nativescript/payments": ["packages/payments/index.d.ts"]
+      "@nativescript/payments": ["packages/payments/index.d.ts"],
+      "@nativescript/square-in-app-payments": ["packages/square-in-app-payments/index.d.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

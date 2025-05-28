@@ -1,0 +1,71 @@
+{
+  "name": "square-in-app-payments",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/square-in-app-payments",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "outputPath": "dist/packages/square-in-app-payments",
+        "tsConfig": "packages/square-in-app-payments/tsconfig.json",
+        "packageJson": "packages/square-in-app-payments/package.json",
+        "main": "packages/square-in-app-payments/index.d.ts",
+        "assets": [
+          "packages/square-in-app-payments/*.md",
+          "packages/square-in-app-payments/index.d.ts",
+          "packages/square-in-app-payments/nativescript.config.ts",
+          "LICENSE",
+          {
+            "glob": "**/*",
+            "input": "packages/square-in-app-payments/platforms/",
+            "output": "./platforms/"
+          },
+          {
+            "glob": "**/*",
+            "input": "packages/square-in-app-payments/hooks/",
+            "output": "./hooks/"
+          }
+        ],
+        "dependsOn": [
+          {
+            "target": "build.all",
+            "projects": "dependencies"
+          }
+        ]
+      }
+    },
+    "build.all": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["node tools/scripts/build-finish.ts square-in-app-payments"],
+        "parallel": false
+      },
+      "outputs": ["{workspaceRoot}/dist/packages/square-in-app-payments"],
+      "dependsOn": [
+        {
+          "target": "build.all",
+          "projects": "dependencies"
+        },
+        {
+          "target": "build",
+          "projects": "self"
+        }
+      ]
+    },
+    "focus": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["nx g @nativescript/plugin-tools:focus-packages square-in-app-payments"],
+        "parallel": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:eslint",
+      "options": {
+        "lintFilePatterns": ["packages/square-in-app-payments/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

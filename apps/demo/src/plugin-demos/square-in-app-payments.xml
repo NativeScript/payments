@@ -1,0 +1,16 @@
+<Page xmlns="http://schemas.nativescript.org/tns.xsd" navigatingTo="navigatingTo" class="page">
+  <Page.actionBar>
+    <ActionBar title="square-in-app-payments" icon="" class="action-bar">
+    </ActionBar>
+  </Page.actionBar>
+  <StackLayout class="p-20">
+    <ScrollView class="h-full">
+      <StackLayout>
+        <Button text="Start Card Entry" tap="{{ creditCard }}" class="btn btn-primary rounded"/>
+
+        <Button text="Start Gift Card" tap="{{ giftCard }}" class="btn btn-primary btn-lemon rounded"/>
+
+      </StackLayout>
+    </ScrollView>
+  </StackLayout>
+</Page>

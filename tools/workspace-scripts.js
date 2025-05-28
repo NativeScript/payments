@@ -64,6 +64,13 @@ module.exports = {
           description: '@nativescript/apple-pay: Build',
         },
       },
+      // @nativescript/square-in-app-payments
+      'square-in-app-payments': {
+        build: {
+          script: 'nx run square-in-app-payments:build.all',
+          description: '@nativescript/square-in-app-payments: Build',
+        },
+      },
       'build-all': {
         script: 'nx run-many --target=build.all --all',
         description: 'Build all packages',
@@ -85,6 +92,10 @@ module.exports = {
       'apple-pay': {
         script: 'nx run apple-pay:focus',
         description: 'Focus on @nativescript/apple-pay',
+      },
+      'square-in-app-payments': {
+        script: 'nx run square-in-app-payments:focus',
+        description: 'Focus on @nativescript/square-in-app-payments',
       },
       reset: {
         script: 'nx g @nativescript/plugin-tools:focus-packages',

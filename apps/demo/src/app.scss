@@ -1,5 +1,8 @@
 @import 'nativescript-theme-core/scss/light';
 @import 'nativescript-theme-core/scss/index';
+Button {
+  text-transform: capitalize;
+}
 .rounded {
   border-radius: 20;
 }
