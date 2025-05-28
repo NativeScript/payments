@@ -25,7 +25,7 @@ export class DemoModel extends Observable {
     }
 
     // Subscribe the Handlers
-    subscription = paymentEvents.connect();
+
     paymentEvents.pipe(toMainThread()).subscribe((event: PaymentEvent.Type) => {
       switch (event.context) {
         case PaymentEvent.Context.CONNECTING_STORE:
@@ -78,6 +78,8 @@ export class DemoModel extends Observable {
           break;
       }
     });
+
+    subscription = paymentEvents.connect();
 
     // Here we initialize the payment system
     initPayments();

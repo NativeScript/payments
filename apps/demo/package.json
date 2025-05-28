@@ -6,9 +6,9 @@
   "dependencies": {
     "@nativescript/core": "file:../../node_modules/@nativescript/core",
     "@nativescript/payments": "file:../../packages/payments",
-    "@nativescript/google-pay": "file:../../packages/google-pay",
+    "rxjs": "~7.3.1",
     "@nativescript/apple-pay": "file:../../packages/apple-pay",
-    "rxjs": "~7.3.1"
+    "@nativescript/google-pay": "file:../../packages/google-pay"
   },
   "devDependencies": {
     "@nativescript/android": "~8.8.0",
