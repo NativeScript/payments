@@ -15,6 +15,8 @@
           "packages/square-in-app-payments/*.md",
           "packages/square-in-app-payments/index.d.ts",
           "packages/square-in-app-payments/nativescript.config.ts",
+          "packages/square-in-app-payments/postinstall.js",
+          "packages/square-in-app-payments/preuninstall.js",
           "LICENSE",
           {
             "glob": "**/*",
