@@ -1,6 +1,6 @@
 {
   "name": "@nativescript/square-in-app-payments",
-  "version": "0.0.1",
+  "version": "1.0.1",
   "description": "Square In-App Payments SDK for NativeScript",
   "main": "index",
   "types": "index.d.ts",
