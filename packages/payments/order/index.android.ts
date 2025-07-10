@@ -5,7 +5,7 @@ export { OrderState } from './common';
 export class Order extends BaseOrder {
   public nativeValue: com.android.billingclient.api.Purchase;
 
-  constructor(nativeValue: com.android.billingclient.api.Purchase | com.android.billingclient.api.PurchaseHistoryRecord, restored: boolean = false) {
+  constructor(nativeValue: com.android.billingclient.api.Purchase, restored: boolean = false) {
     super(nativeValue, restored);
 
     const jsonObject: any = JSON.parse(nativeValue.getOriginalJson());

@@ -19,7 +19,7 @@ export function fetchSubscriptions(itemIds: Array<string>): void;
 
 export function startSubscription(item: Item, options?: BuyItemOptions): void;
 
-export declare function finalizeOrder(order: Order): void;
+export declare function finalizeOrder(order: Order, consume: boolean): void;
 
 export declare function restoreOrders(skuType?: string): void;
 
