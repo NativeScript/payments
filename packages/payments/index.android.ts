@@ -277,7 +277,7 @@ export function finalizeOrder(order: Order, consume: boolean): void {
     console.error(new Error('BillingClient missing.'));
     return;
   }
-  if (order.isSubscription) {
+  if (order.isSubscription || !consume) {
     if (order.acknowledged) {
       _payments$.next({
         context: PaymentEvent.Context.FINALIZING_ORDER,
@@ -318,14 +318,6 @@ export function finalizeOrder(order: Order, consume: boolean): void {
     payload: order,
   });
   if (order.state === OrderState.VALID && !order.restored) {
-    if (!consume) {
-      _payments$.next({
-        context: PaymentEvent.Context.FINALIZING_ORDER,
-        result: PaymentEvent.Result.SUCCESS,
-        payload: new Order(order.nativeValue, order.restored),
-      });
-      return;
-    }
     const consumeParams = com.android.billingclient.api.ConsumeParams.newBuilder().setPurchaseToken(order.receiptToken).build();
     _billingClient.consumeAsync(
       consumeParams,
