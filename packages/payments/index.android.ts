@@ -396,12 +396,14 @@ export function restoreOrders(skuType?: string): void {
                 _payments$.next({
                   context: PaymentEvent.Context.PROCESSING_ORDER,
                   result: PaymentEvent.Result.SUCCESS,
-                  payload: new Order(purchase, true),
+                  // we no longer restore orders, we just process them (if it shows up here it means that it's either an active subscription or an unconsumed order)
+                  // meaning that it can be acknowledged (if order.acknowledged = false) or consumed (if order.isSubscription = false)
+                  payload: new Order(purchase, false),
                 });
                 _payments$.next({
                   context: PaymentEvent.Context.RESTORING_ORDERS,
                   result: PaymentEvent.Result.PENDING,
-                  payload: new Order(purchase, true),
+                  payload: new Order(purchase, false),
                 });
               }
             }
