@@ -62,7 +62,7 @@ export class DemoModel extends Observable {
             console.log(`Order Id: ${event.payload.orderId}`);
             console.log(`Order Date: ${event.payload.orderDate}`);
             console.log(`Receipt Token: ${event.payload.receiptToken}`);
-            finalizeOrder(event.payload);
+            finalizeOrder(event.payload, true);
           }
           break;
         case PaymentEvent.Context.FINALIZING_ORDER:
