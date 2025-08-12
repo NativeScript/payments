@@ -1,31 +1,59 @@
-import { BuyItemOptions } from './common';
-import { Item } from './item';
-import { Order } from './order';
+export class Payment {
+  onReady?: () => void;
+  onPurchaseUpdate?: (purchases: Array<Transaction>, error: Error | null) => void;
+  fetchProducts(itemIds: Array<string>, type: 'inapp' | 'subs'): Promise<Array<Product>>;
+  purchaseProduct(product: Product): Promise<void>;
+  fetchPurchases(): Promise<Array<Transaction>>;
 
-export { BuyItemOptions, PaymentEvent, paymentEvents, payments$ } from './common';
-export * from './failure';
-export * from './item';
-export * from './order';
+  static isSupported(): boolean;
 
-export declare function init(): void;
+  canMakePayments(): boolean;
+}
 
-export declare function tearDown(): void;
+export class Transaction {
+  readonly native: org.nativescript.plugins.payments.Transaction | NSCTransaction;
 
-export declare function fetchItems(itemIds: Array<string>): void;
+  readonly receiptToken: string;
 
-export declare function buyItem(item: Item, options?: BuyItemOptions): void;
+  readonly signature: string;
 
-export function fetchSubscriptions(itemIds: Array<string>): void;
+  readonly quantity: number;
 
-export function startSubscription(item: Item, options?: BuyItemOptions): void;
+  readonly productId: string;
 
-export declare function finalizeOrder(order: Order): void;
+  readonly orderId: string;
 
-export declare function restoreOrders(skuType?: string): void;
+  readonly orderDate: Date;
 
-export declare function canMakePayments(): boolean;
+  readonly state: 'pending' | 'purchased' | 'unknown';
 
-export function toMainThread();
+  finish(): Promise<void>;
+}
 
-// TODO Manage subscriptions
-// TODO map subscriptions (Android)
+export class Product {
+  readonly native: org.nativescript.plugins.payments.Product | NSCProduct;
+
+  readonly id: string;
+  readonly name: string;
+  readonly description: string;
+
+  readonly title: string;
+
+  readonly localizedTitle: string;
+
+  readonly type: 'inapp' | 'subs';
+
+  readonly priceFormatted: string | null;
+
+  readonly priceAmountMicros: number | null;
+}
+
+export class Transaction {
+  native: org.nativescript.plugins.payments.Transaction;
+  readonly json: any;
+  readonly signature: string;
+  readonly quantity: number;
+  readonly orderId: string;
+  readonly state: 'pending' | 'purchased' | 'unknown';
+  finish(): Promise<void>;
+}
