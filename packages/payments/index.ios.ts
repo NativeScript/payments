@@ -154,6 +154,9 @@ export class Product {
       description: this.description,
       title: this.title,
       type: this.type,
+      localizedTitle: this.localizedTitle,
+      priceFormatted: this.priceFormatted,
+      priceAmountMicros: this.priceAmountMicros,
     };
   }
 }

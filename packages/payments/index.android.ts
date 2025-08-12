@@ -158,7 +158,10 @@ export class Product {
       name: this.name,
       description: this.description,
       title: this.title,
+      localizedTitle: this.localizedTitle,
       type: this.type,
+      priceFormatted: this.priceFormatted,
+      priceAmountMicros: this.priceAmountMicros,
     };
   }
 }
