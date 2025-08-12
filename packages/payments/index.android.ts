@@ -121,6 +121,8 @@ export class Transaction {
       signature: this.signature,
       quantity: this.quantity,
       state: this.state,
+      isAcknowledged: this.isAcknowledged,
+      type: this.type,
     };
   }
 }
