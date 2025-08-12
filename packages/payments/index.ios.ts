@@ -1,7 +1,5 @@
 import { Utils } from '@nativescript/core';
 
-export { PaymentEvent, paymentEvents, payments$, toMainThread } from './common';
-
 export class PaymentError extends Error {
   private nativeError: NSCPaymentsResponse;
   constructor(message: string, nativeError?: any) {
@@ -95,10 +93,12 @@ export class Transaction {
 
   toJSON() {
     return {
+      orderId: this.orderId,
+      productId: this.productId,
+      orderDate: this.orderDate,
       receiptToken: this.receiptToken,
       signature: this.signature,
       quantity: this.quantity,
-      orderId: this.orderId,
       state: this.state,
     };
   }

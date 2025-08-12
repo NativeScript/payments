@@ -98,10 +98,12 @@ export class Transaction {
 
   toJSON() {
     return {
-      json: this.json,
+      orderId: this.orderId,
+      productId: this.productId,
+      orderDate: this.orderDate,
+      receiptToken: this.receiptToken,
       signature: this.signature,
       quantity: this.quantity,
-      orderId: this.orderId,
       state: this.state,
     };
   }
