@@ -102,10 +102,10 @@ class Payments(context: Context) {
             override fun onBillingSetupFinished(p0: BillingResult) {
                 isSetup = p0.responseCode == BillingClient.BillingResponseCode.OK
                 if (!this@Payments.isReady) {
+                    this@Payments.isReady = true
                     onReadyListener?.let {
                         it()
                     }
-                    this@Payments.isReady = true
                 }
             }
         })
@@ -122,10 +122,10 @@ class Payments(context: Context) {
                     override fun onBillingSetupFinished(p0: BillingResult) {
                         isSetup = p0.responseCode == BillingClient.BillingResponseCode.OK
                         if (!this@Payments.isReady) {
+                            this@Payments.isReady = true
                             onReadyListener?.let {
                                 it()
                             }
-                            this@Payments.isReady = true
                         }
                     }
                 })
