@@ -69,6 +69,10 @@ export class Transaction {
     return this.native.orderDate;
   }
 
+  get isAcknowledged(): boolean {
+    return this.state === 'purchased';
+  }
+
   get state(): 'pending' | 'purchased' | 'unknown' {
     switch (this.native.state) {
       case NSCTransactionState.Pending:
@@ -78,6 +82,10 @@ export class Transaction {
       default:
         return 'unknown';
     }
+  }
+
+  get type(): 'inapp' | 'subs' | 'unknown' {
+    return this.native.type as never;
   }
 
   finish() {
@@ -101,6 +109,7 @@ export class Transaction {
       signature: this.signature,
       quantity: this.quantity,
       state: this.state,
+      type: this.type,
     };
   }
 }

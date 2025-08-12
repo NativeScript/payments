@@ -181,6 +181,22 @@ public class NSCTransaction: NSObject {
     return nil
   }
   
+  internal var productType = "unknown"
+  public var type: String {
+    if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
+      if(version == .v2){
+        switch(v2!.productType){
+        case .autoRenewable, .nonRenewable:
+          return "sub"
+        default:
+          return "inapp"
+        }
+      }
+    }
+    
+    return productType
+  }
+  
   public func finish(_ callback: @escaping (NSCPaymentsResponse?) -> Void) {
     if version == .v2 && version.storeKit2Available {
       Task {
@@ -483,11 +499,15 @@ public class NSCPayments: NSObject {
           func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
             if(payments.isRestoring){
               for transaction in transactions where transaction.transactionState == .restored {
-                payments.previousPurcahses.append(NSCTransaction(transaction: transaction, .v1))
+                let value = NSCTransaction(transaction: transaction, .v1)
+                value.productType = payments.productsTypeCache[transaction.payment.productIdentifier] ?? "unknown"
+                payments.previousPurcahses.append(value)
               }
             }else {
               for transaction in transactions {
-                payments.transactionUpdateListener?(NSCTransaction(transaction: transaction, .v1))
+                let value = NSCTransaction(transaction: transaction, .v1)
+                value.productType = payments.productsTypeCache[transaction.payment.productIdentifier] ?? "unknown"
+                payments.transactionUpdateListener?(value)
               }
             }
           }
@@ -544,7 +564,7 @@ public class NSCPayments: NSObject {
   public func canMakePayments() -> Bool {
     return NSCPayments.isSupported()
   }
-  
+  private var productsTypeCache: [String: String] = [:]
   public func fetchProducts(_ identifiers: [String], _ callback: @escaping ([NSCProduct], Error?) -> Void) {
     switch(version){
     case .v1:
@@ -554,15 +574,31 @@ public class NSCPayments: NSObject {
         class SKProductsRequestDelegateImpl: NSObject, SKProductsRequestDelegate {
           let callback: ([NSCProduct], Error?) -> Void
           let version: NSCPaymentsStoreKitVersion
-          init(_ cb: @escaping ([NSCProduct], Error?) -> Void, _ storeVerion: NSCPaymentsStoreKitVersion){
+          let payments: NSCPayments
+          init(_ cb: @escaping ([NSCProduct], Error?) -> Void, _ storeVerion: NSCPaymentsStoreKitVersion, _ payment: NSCPayments){
             version = storeVerion
             callback = cb
+            payments = payment
             super .init()
             
           }
           
           func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
-            let products = response.products.map {NSCProduct(product: $0, version)}
+            let products = response.products.map {
+              
+              payments.productsTypeCache[$0.productIdentifier] = if #available(iOS 11.2, macOS 10.13.2, tvOS 11.2, watchOS 6.2, *){
+                 if($0.subscriptionPeriod != nil){
+                  "sub"
+                }else {
+                  "inapp"
+                }
+              }else {
+                "unknown"
+              }
+              
+              
+              return NSCProduct(product: $0, version)
+            }
             callback( products, nil)
           }
           
@@ -570,7 +606,7 @@ public class NSCPayments: NSObject {
             callback([], error)
           }
         }
-        return SKProductsRequestDelegateImpl(callback, version)
+        return SKProductsRequestDelegateImpl(callback, version, self)
       }()
       
       request.delegate = delegate
@@ -652,7 +688,7 @@ public class NSCPayments: NSObject {
                 )
                 break
               case .verified(let transaction):
-                transactionUpdateListener?(NSCTransaction(transaction: transaction, .v2))
+              //  transactionUpdateListener?(NSCTransaction(transaction: transaction, .v2))
                 callback(nil)
                 break
               }
@@ -664,7 +700,6 @@ public class NSCPayments: NSObject {
               break
               
             }
-            
           }
         }catch {
           callback(

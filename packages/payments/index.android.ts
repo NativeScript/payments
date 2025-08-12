@@ -70,12 +70,27 @@ export class Transaction {
     return new Date(this.native.getOrderDate());
   }
 
+  get isAcknowledged(): boolean {
+    return this.native.isAcknowledged();
+  }
+
   get state(): 'pending' | 'purchased' | 'unknown' {
     switch (this.native.getState()) {
       case org.nativescript.plugins.payments.Transaction.State.Pending:
         return 'pending';
       case org.nativescript.plugins.payments.Transaction.State.Purchased:
         return 'purchased';
+      default:
+        return 'unknown';
+    }
+  }
+
+  get type(): 'inapp' | 'subs' | 'unknown' {
+    switch (this.native.getType()) {
+      case org.nativescript.plugins.payments.Product.Type.InApp:
+        return 'inapp';
+      case org.nativescript.plugins.payments.Product.Type.Subs:
+        return 'subs';
       default:
         return 'unknown';
     }
@@ -140,8 +155,15 @@ export class Product {
     return this.native.getProduct().getTitle();
   }
 
-  get type(): 'inapp' | 'subs' {
-    return this.native.getType().getToType$payments_release() as 'inapp' | 'subs';
+  get type(): 'inapp' | 'subs' | 'unknown' {
+    switch (this.native.getType()) {
+      case org.nativescript.plugins.payments.Product.Type.InApp:
+        return 'inapp';
+      case org.nativescript.plugins.payments.Product.Type.Subs:
+        return 'subs';
+      default:
+        return 'unknown';
+    }
   }
 
   get priceFormatted(): string | null {

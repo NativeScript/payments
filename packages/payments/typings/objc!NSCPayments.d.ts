@@ -144,6 +144,8 @@ declare class NSCTransaction extends NSObject {
 
   readonly version: NSCPaymentsStoreKitVersion;
 
+  readonly type: string;
+
   constructor(o: { transaction: any });
 
   finish(callback: (p1: NSCPaymentsResponse) => void): void;

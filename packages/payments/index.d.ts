@@ -42,6 +42,10 @@ export class Transaction {
 
   readonly state: 'pending' | 'purchased' | 'unknown';
 
+  readonly isAcknowledged: boolean;
+
+  readonly type: 'inapp' | 'subs' | 'unknown';
+
   finish(): Promise<void>;
 }
 
@@ -56,7 +60,7 @@ export class Product {
 
   readonly localizedTitle: string;
 
-  readonly type: 'inapp' | 'subs';
+  readonly type: 'inapp' | 'subs' | 'unknown';
 
   readonly priceFormatted: string | null;
 

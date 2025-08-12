@@ -126,6 +126,7 @@ declare module org {
           public getDeveloperPayload(): string;
           public getOriginalJsonString(): string;
           public getProducts(): java.util.List<string>;
+          public isAcknowledged(): boolean;
         }
         export module Transaction {
           export class State {
