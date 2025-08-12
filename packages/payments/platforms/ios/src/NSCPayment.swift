@@ -431,6 +431,15 @@ public class NSCPaymentsResponse: NSObject {
   }
 }
 
+@objc(NSCPurchaseOptions)
+@objcMembers
+public class NSCPurchaseOptions: NSObject {
+  public var accountId: String?
+  public var accountUUID: UUID?
+  public var quantity: Int = 1
+  public var simulatesAskToBuyInSandbox: Bool = false
+}
+
 @objc(NSCPayments)
 @objcMembers
 public class NSCPayments: NSObject {
@@ -585,25 +594,53 @@ public class NSCPayments: NSObject {
     }
   }
   
-  public func purchaseProduct(_ product: NSCProduct, _ confirmIn: UIViewController, _ callback: @escaping (NSCPaymentsResponse?)->Void){
+  public func purchaseProduct(_ product: NSCProduct, _ confirmIn: UIViewController, _ options: NSCPurchaseOptions?, _ callback: @escaping (NSCPaymentsResponse?)->Void){
     switch(version){
     case .v1:
-      let payment = SKPayment(product: product.v1!)
+      let payment = SKMutablePayment(product: product.v1!)
+      if let options = options {
+        if let accountId = options.accountId {
+          payment.applicationUsername = accountId
+        }
+        payment.quantity = options.quantity
+        payment.simulatesAskToBuyInSandbox = options.simulatesAskToBuyInSandbox
+      }
+     
+      
       SKPaymentQueue.default().add(payment)
       break
     case .v2:
       Task {
         do {
           if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
+            var opts: Set<Product.PurchaseOption> = []
+           
+            if let options = options {
+              var id: UUID? = nil
+              if let accountId = options.accountId {
+                id = UUID(uuidString: accountId)
+              }
+              if let accountUUID = options.accountUUID {
+                id = accountUUID
+              }
+              if let id = id {
+                opts.insert(.appAccountToken(id))
+              }
+              
+              opts.insert(.quantity(options.quantity))
+              opts.insert(.simulatesAskToBuyInSandbox(options.simulatesAskToBuyInSandbox))
+              
+            }
+            
             var result: Product.PurchaseResult
             if #available(iOS 18.2, *) {
               if let scene = await confirmIn.view.window?.windowScene {
-                result = try await product.v2!.purchase(confirmIn: scene)
+                result = try await product.v2!.purchase(confirmIn: scene, options: opts)
               }else {
-                result = try await product.v2!.purchase()
+                result = try await product.v2!.purchase(options: opts)
               }
             }else {
-              result = try await product.v2!.purchase()
+              result = try await product.v2!.purchase(options: opts)
             }
             
             switch result {

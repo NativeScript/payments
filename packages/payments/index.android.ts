@@ -1,4 +1,5 @@
 import { Utils } from '@nativescript/core';
+import type { PurchaseOptions } from '.';
 declare const kotlin: any;
 
 export class PaymentError extends Error {
@@ -269,9 +270,26 @@ export class Payment {
     });
   }
 
-  purchaseProduct(product: Product): Promise<void> {
+  purchaseProduct(product: Product, options: PurchaseOptions | null | undefined = null): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      const response = this.native.purchaseProduct(Utils.android.getCurrentActivity(), product.native);
+      const opts = new org.nativescript.plugins.payments.Payments.PurchaseOptions();
+      if (options && typeof options === 'object') {
+        if ('accountId' in options) {
+          opts.setAccountId(options.accountId);
+        }
+        if (options.android && typeof options.android === 'object') {
+          if ('accountId' in options.android) {
+            opts.setAccountId(options.android.accountId);
+          }
+          if ('profileId' in options.android) {
+            opts.setProfileId(options.android.profileId);
+          }
+          if ('isOfferPersonalized' in options.android) {
+            opts.setSetIsOfferPersonalized(options.android.isOfferPersonalized);
+          }
+        }
+      }
+      const response = this.native.purchaseProduct(Utils.android.getCurrentActivity(), product.native, opts);
       const code = response.getCode();
       if (code === 0) {
         resolve();

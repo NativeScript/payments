@@ -1,8 +1,23 @@
+export interface PurchaseOptions {
+  accountId?: string;
+  android?: {
+    accountId?: string;
+    profileId?: string;
+    isOfferPersonalized?: boolean;
+  };
+  ios?: {
+    quantity?: number;
+    simulatesAskToBuyInSandbox?: boolean;
+    accountId?: any /* NSUUID */;
+  };
+}
+
 export class Payment {
   onReady?: () => void;
   onPurchaseUpdate?: (purchases: Array<Transaction>, error: Error | null) => void;
   fetchProducts(itemIds: Array<string>, type: 'inapp' | 'subs'): Promise<Array<Product>>;
   purchaseProduct(product: Product): Promise<void>;
+  purchaseProduct(product: Product, options: PurchaseOptions | null | undefined): Promise<void>;
   fetchPurchases(): Promise<Array<Transaction>>;
 
   static isSupported(): boolean;

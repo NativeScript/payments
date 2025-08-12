@@ -1,4 +1,5 @@
 import { Utils } from '@nativescript/core';
+import type { PurchaseOptions } from '.';
 
 export class PaymentError extends Error {
   private nativeError: NSCPaymentsResponse;
@@ -234,9 +235,27 @@ export class Payment {
     });
   }
 
-  purchaseProduct(product: Product): Promise<void> {
+  purchaseProduct(product: Product, options?: PurchaseOptions | null | undefined): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      const response = this.native.purchaseProduct(product.native, Utils.ios.getVisibleViewController(Utils.ios.getRootViewController()), (response) => {
+      const opts: NSCPurchaseOptions = NSCPurchaseOptions.new();
+      if (options && typeof options === 'object') {
+        if (options.accountId) {
+          opts.accountId = options.accountId;
+        }
+        if (options.ios && typeof options.ios === 'object') {
+          if ('quantity' in options.ios) {
+            opts.quantity = options.ios.quantity;
+          }
+          if ('simulatesAskToBuyInSandbox' in options.ios) {
+            opts.simulatesAskToBuyInSandbox = options.ios.simulatesAskToBuyInSandbox;
+          }
+
+          if ('accountId' in options.ios && options.ios.accountId instanceof NSUUID) {
+            opts.accountUUID = options.ios.accountId;
+          }
+        }
+      }
+      this.native.purchaseProduct(product.native, Utils.ios.getVisibleViewController(Utils.ios.getRootViewController()), opts, (response) => {
         if (response) {
           reject(new PaymentError(response.message, response));
         }

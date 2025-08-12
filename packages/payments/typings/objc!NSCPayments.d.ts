@@ -23,7 +23,7 @@ declare class NSCPayments extends NSObject {
 
   fetchPurchases(callback: (p1: NSArray<NSCTransaction>, p2: NSCPaymentsResponse) => void): void;
 
-  purchaseProduct(product: NSCProduct, confirmIn: UIViewController, callback: (p1: NSCPaymentsResponse) => void): void;
+  purchaseProduct(product: NSCProduct, confirmIn: UIViewController, options: NSCPurchaseOptions, callback: (p1: NSCPaymentsResponse) => void): void;
 }
 
 declare class NSCPaymentsResponse extends NSObject {
@@ -104,6 +104,17 @@ declare class NSCProduct extends NSObject {
   constructor(o: { product: any });
 
   initWithProduct(product: any, version: NSCPaymentsStoreKitVersion): this;
+}
+
+declare class NSCPurchaseOptions extends NSObject {
+  static alloc(): NSCPurchaseOptions; // inherited from NSObject
+
+  static new(): NSCPurchaseOptions; // inherited from NSObject
+
+  accountId: string;
+  accountUUID: NSUUID;
+  quantity: number;
+  simulatesAskToBuyInSandbox: Bool = false;
 }
 
 declare class NSCTransaction extends NSObject {
