@@ -21,37 +21,36 @@ class Payments(context: Context) {
   private var isReady = false
   private var isSetup = false
   private val purchaseListener = PurchasesUpdatedListener { response, purchases ->
-    {
-      if (response.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
-        val value = purchases.map {
-          val json = JSONObject(it.originalJson)
-          Transaction(
-            it, if (json.optBoolean("autoRenewing", false)) {
-              Product.Type.Subs
-            } else {
-              Product.Type.InApp
-            }, this@Payments
-          )
-        }
-        onPurchaseUpdateListener?.let {
-          it(value, null)
-        }
-      } else {
-        onPurchaseUpdateListener?.let {
-          it(null, mapResponseCode(response.responseCode))
-        }
+    if (response.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
+      val value = purchases.map {
+        val json = JSONObject(it.originalJson)
+        Transaction(
+          it, if (json.optBoolean("autoRenewing", false)) {
+            Product.Type.Subs
+          } else {
+            Product.Type.InApp
+          }, this@Payments
+        )
+      }
+      onPurchaseUpdateListener?.let {
+        it(value, null)
+      }
+    } else {
+      onPurchaseUpdateListener?.let {
+        it(null, mapResponseCode(response.responseCode))
       }
     }
   }
-  internal var billing = BillingClient.newBuilder(context).apply {
-    val pendingParams = PendingPurchasesParams.newBuilder()
-      .enablePrepaidPlans()
-      .enableOneTimeProducts()
-      .build()
-    enablePendingPurchases(pendingParams)
-    enableAutoServiceReconnection()
-    setListener(purchaseListener)
-  }.build()
+  internal var billing = BillingClient.newBuilder(context)
+    .enablePendingPurchases(
+      PendingPurchasesParams.newBuilder()
+        .enablePrepaidPlans()
+        .enableOneTimeProducts()
+        .build()
+    )
+    .enableAutoServiceReconnection()
+    .setListener(purchaseListener)
+    .build()
 
   private val executor = Executors.newCachedThreadPool()
 
