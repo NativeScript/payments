@@ -84,8 +84,24 @@ export class Transaction {
     }
   }
 
-  get type(): 'inapp' | 'subs' | 'unknown' {
+  get type(): 'inapp' | 'subs`' | 'unknown' {
     return this.native.type as never;
+  }
+
+  get isExpired(): boolean {
+    return this.native.isExpired;
+  }
+
+  get expirationDate(): Date {
+    return this.native.expirationDate;
+  }
+
+  get isRevoked(): boolean {
+    return this.native.isRevoked;
+  }
+
+  get revocationDate(): Date {
+    return this.native.revocationDate;
   }
 
   finish() {
@@ -111,6 +127,10 @@ export class Transaction {
       state: this.state,
       isAcknowledged: this.isAcknowledged,
       type: this.type,
+      isExpired: this.isExpired,
+      expirationDate: this.expirationDate,
+      isRevoked: this.isRevoked,
+      revocationDate: this.revocationDate,
     };
   }
 }

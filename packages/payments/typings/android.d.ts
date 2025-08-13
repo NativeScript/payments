@@ -118,7 +118,7 @@ declare module org {
           public getToken(): string;
           public constructor(purchase: com.android.billingclient.api.Purchase, type: org.nativescript.plugins.payments.Product.Type, payments: org.nativescript.plugins.payments.Payments);
           public getQuantity(): number;
-          public isSubscription(): boolean;
+          public isAutoRenewing(): boolean;
           public getPurchase(): com.android.billingclient.api.Purchase;
           public getSignature(): string;
           public getType(): org.nativescript.plugins.payments.Product.Type;
@@ -127,6 +127,7 @@ declare module org {
           public getOriginalJsonString(): string;
           public getProducts(): java.util.List<string>;
           public isAcknowledged(): boolean;
+          public isExpired(): boolean;
         }
         export module Transaction {
           export class State {

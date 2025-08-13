@@ -9,7 +9,7 @@ declare class NSCPayments extends NSObject {
 
   pendingTasks: NSArray<any>;
 
-  previousPurcahses: NSArray<NSCTransaction>;
+  previousPurchases: NSArray<NSCTransaction>;
 
   transactionUpdateListener: (p1: NSCTransaction) => void;
 
@@ -95,9 +95,9 @@ declare class NSCProduct extends NSObject {
 
   readonly receiptToken: string;
 
-  readonly v1: SKProduct;
-
   readonly type: string;
+
+  readonly v1: SKProduct;
 
   readonly version: NSCPaymentsStoreKitVersion;
 
@@ -112,9 +112,12 @@ declare class NSCPurchaseOptions extends NSObject {
   static new(): NSCPurchaseOptions; // inherited from NSObject
 
   accountId: string;
+
   accountUUID: NSUUID;
+
   quantity: number;
-  simulatesAskToBuyInSandbox: Bool = false;
+
+  simulatesAskToBuyInSandbox: boolean;
 }
 
 declare class NSCTransaction extends NSObject {
@@ -126,25 +129,37 @@ declare class NSCTransaction extends NSObject {
 
   errorValue: NSError;
 
+  readonly expirationDate: Date;
+
+  expirationDateV1: Date;
+
+  readonly isExpired: boolean;
+
+  readonly isRevoked: boolean;
+
+  readonly orderDate: Date;
+
   readonly orderId: string;
 
   readonly productId: string;
 
-  readonly quantity: number;
-
-  readonly orderDate: Date?;
+  productType: string;
 
   readonly receipt: string;
+
+  readonly revocationDate: Date;
+
+  revocationDateV1: Date;
 
   readonly state: NSCTransactionState;
 
   transaction: any;
 
+  readonly type: string;
+
   readonly v1: SKPaymentTransaction;
 
   readonly version: NSCPaymentsStoreKitVersion;
-
-  readonly type: string;
 
   constructor(o: { transaction: any });
 

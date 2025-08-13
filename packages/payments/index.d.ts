@@ -46,6 +46,18 @@ export class Transaction {
 
   readonly type: 'inapp' | 'subs' | 'unknown';
 
+  readonly isAcknowledged: boolean;
+
+  readonly isExpired: boolean;
+
+  readonly expirationDate: Date;
+
+  readonly isRevoked: boolean;
+
+  readonly revocationDate: Date;
+
+  readonly isAutoRenewing: boolean;
+
   finish(): Promise<void>;
 }
 

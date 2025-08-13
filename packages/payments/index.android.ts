@@ -74,6 +74,10 @@ export class Transaction {
     return this.native.isAcknowledged();
   }
 
+  get isAutoRenewing(): boolean {
+    return this.native.isAutoRenewing();
+  }
+
   get state(): 'pending' | 'purchased' | 'unknown' {
     switch (this.native.getState()) {
       case org.nativescript.plugins.payments.Transaction.State.Pending:
@@ -94,6 +98,10 @@ export class Transaction {
       default:
         return 'unknown';
     }
+  }
+
+  get isExpired(): boolean {
+    return this.native.isExpired();
   }
 
   finish() {
@@ -123,6 +131,8 @@ export class Transaction {
       state: this.state,
       isAcknowledged: this.isAcknowledged,
       type: this.type,
+      isExpired: this.isExpired,
+      isAutoRenewing: this.isAutoRenewing,
     };
   }
 }

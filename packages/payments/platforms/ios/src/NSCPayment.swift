@@ -7,7 +7,7 @@
 //
 import UIKit
 import StoreKit
-
+import TPInAppReceipt
 
 @objc(NSCPaymentsStoreKitVersion)
 public enum NSCPaymentsStoreKitVersion: Int32, RawRepresentable {
@@ -195,6 +195,73 @@ public class NSCTransaction: NSObject {
     }
     
     return productType
+  }
+  
+  internal var revocationDateV1: Date? = nil
+  
+  var revocationDate: Date? {
+    get {
+      if version == .v2 && version.storeKit2Available {
+        if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
+          return v2!.revocationDate
+        }
+      }else if version == .v1 {
+        return self.revocationDateV1
+      }
+      return nil
+    }
+  }
+  
+  var isRevoked: Bool {
+    get {
+      var revocationDate: Date? = nil
+      if version == .v2 && version.storeKit2Available {
+        if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
+          revocationDate = v2!.revocationDate
+        }
+      }else if version == .v1 {
+        revocationDate = self.revocationDateV1
+      }
+      
+      if let revoked = revocationDate {
+        return revoked >= Date()
+      }
+      return false
+    }
+  }
+  
+  internal var expirationDateV1: Date? = nil
+  
+  var expirationDate: Date? {
+    get {
+      if version == .v2 && version.storeKit2Available {
+        if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
+          return v2!.expirationDate
+        }
+      }else if version == .v1 {
+        return self.expirationDateV1
+      }
+      return nil
+    }
+  }
+  
+  var isExpired: Bool {
+    get {
+      var expirationDate: Date? = nil
+      if version == .v2 && version.storeKit2Available {
+        if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
+          expirationDate = v2!.expirationDate
+        }
+      }else {
+        expirationDate = expirationDateV1
+      }
+      
+      if let expiration = expirationDate {
+        return expiration >= Date()
+      }
+      
+      return false
+    }
   }
   
   public func finish(_ callback: @escaping (NSCPaymentsResponse?) -> Void) {
@@ -465,7 +532,7 @@ public class NSCPayments: NSObject {
   public var transactionUpdateListener: ((NSCTransaction) -> Void)?
   internal var isRestoring = false
   internal var fetchingPurchases: [([NSCTransaction]?, NSCPaymentsResponse?) -> Void] = []
-  internal var previousPurcahses: [NSCTransaction] = []
+  internal var previousPurchases: [NSCTransaction] = []
   public override init() {
     if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
       version = .v2
@@ -497,16 +564,63 @@ public class NSCPayments: NSObject {
           }
           
           func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
+            var receipt: InAppReceipt? =  nil
+            do {
+              receipt = try InAppReceipt.localReceipt()
+            }catch {}
             if(payments.isRestoring){
               for transaction in transactions where transaction.transactionState == .restored {
                 let value = NSCTransaction(transaction: transaction, .v1)
-                value.productType = payments.productsTypeCache[transaction.payment.productIdentifier] ?? "unknown"
-                payments.previousPurcahses.append(value)
+                
+                if let receipt = receipt {
+                  let purchaseInfo = receipt.activeAutoRenewableSubscriptionPurchases
+                    .filter({ $0.transactionIdentifier == transaction.transactionIdentifier })
+                    .first
+                  if let purchaseInfo = purchaseInfo {
+                    value.expirationDateV1 = purchaseInfo.subscriptionExpirationDate
+                    value.revocationDateV1 = purchaseInfo.cancellationDate
+                    value.productType = switch(purchaseInfo.productType){
+                    case .unknown:
+                      "unknown"
+                    case .nonConsumable:
+                      "inapp"
+                    case .consumable:
+                      "inapp"
+                    case .nonRenewingSubscription:
+                      "subs"
+                    case .autoRenewableSubscription:
+                      "subs"
+                    }
+                  }
+                }
+                payments.previousPurchases.append(value)
               }
             }else {
               for transaction in transactions {
                 let value = NSCTransaction(transaction: transaction, .v1)
-                value.productType = payments.productsTypeCache[transaction.payment.productIdentifier] ?? "unknown"
+                if let receipt = receipt {
+                  let purchaseInfo = receipt.activeAutoRenewableSubscriptionPurchases
+                    .filter({ $0.transactionIdentifier == transaction.transactionIdentifier })
+                    .first
+                  if let purchaseInfo = purchaseInfo {
+                    value.expirationDateV1 = purchaseInfo.subscriptionExpirationDate
+                    value.revocationDateV1 = purchaseInfo.cancellationDate
+                    value.productType = switch(purchaseInfo.productType){
+                    case .unknown:
+                      "unknown"
+                    case .nonConsumable:
+                      "inapp"
+                    case .consumable:
+                      "inapp"
+                    case .nonRenewingSubscription:
+                      "subs"
+                    case .autoRenewableSubscription:
+                      "subs"
+                    }
+                  }
+                }
+                
+                
                 payments.transactionUpdateListener?(value)
               }
             }
@@ -527,11 +641,11 @@ public class NSCPayments: NSObject {
           func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
             if(payments.isRestoring){
               for callback in payments.fetchingPurchases {
-                callback(payments.previousPurcahses, nil)
+                callback(payments.previousPurchases, nil)
               }
               
               payments.fetchingPurchases.removeAll()
-              payments.previousPurcahses.removeAll()
+              payments.previousPurchases.removeAll()
               payments.isRestoring = false
             }
           }
@@ -564,7 +678,6 @@ public class NSCPayments: NSObject {
   public func canMakePayments() -> Bool {
     return NSCPayments.isSupported()
   }
-  private var productsTypeCache: [String: String] = [:]
   public func fetchProducts(_ identifiers: [String], _ callback: @escaping ([NSCProduct], Error?) -> Void) {
     switch(version){
     case .v1:
@@ -585,17 +698,6 @@ public class NSCPayments: NSObject {
           
           func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
             let products = response.products.map {
-              
-              payments.productsTypeCache[$0.productIdentifier] = if #available(iOS 11.2, macOS 10.13.2, tvOS 11.2, watchOS 6.2, *){
-                 if($0.subscriptionPeriod != nil){
-                  "sub"
-                }else {
-                  "inapp"
-                }
-              }else {
-                "unknown"
-              }
-              
               
               return NSCProduct(product: $0, version)
             }
@@ -641,7 +743,7 @@ public class NSCPayments: NSObject {
         payment.quantity = options.quantity
         payment.simulatesAskToBuyInSandbox = options.simulatesAskToBuyInSandbox
       }
-     
+      
       
       SKPaymentQueue.default().add(payment)
       break
@@ -650,7 +752,7 @@ public class NSCPayments: NSObject {
         do {
           if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
             var opts: Set<Product.PurchaseOption> = []
-           
+            
             if let options = options {
               var id: UUID? = nil
               if let accountId = options.accountId {
@@ -687,8 +789,7 @@ public class NSCPayments: NSObject {
                   NSCPaymentsResponse(code: .Error, message: "Usage error: \(verificationError.localizedDescription)", resolution: "")
                 )
                 break
-              case .verified(let transaction):
-              //  transactionUpdateListener?(NSCTransaction(transaction: transaction, .v2))
+              case .verified(_):
                 callback(nil)
                 break
               }
