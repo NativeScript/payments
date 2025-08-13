@@ -4,36 +4,42 @@ declare module org {
       export module payments {
         export class Payments {
           public static class: java.lang.Class<org.nativescript.plugins.payments.Payments>;
+          public showInAppMessaging(activity: globalAndroid.app.Activity): void;
           public getBilling$payments_release(): com.android.billingclient.api.BillingClient;
-
-          public setOnReadyListener(value: any): void;
           public setOnPurchaseUpdateListener(value: any): void;
           public isFeatureSupported(feature: org.nativescript.plugins.payments.Payments.Features): boolean;
-          public fetchProducts(it: androidNative.Array<string>, type: org.nativescript.plugins.payments.Product.Type, $i$f$mapTo: any): void;
-          public restartConnection(): void;
+          public purchaseProduct(it: globalAndroid.app.Activity, product: org.nativescript.plugins.payments.Product, opts: org.nativescript.plugins.payments.Payments.PurchaseOptions, callback: any): void;
+          public static getEnableDebug(): boolean;
+          public fetchProducts(it: androidNative.Array<string>, item$iv$iv: org.nativescript.plugins.payments.Product.Type, $i$f$mapTo: any): void;
           public constructor(pendingParams: globalAndroid.content.Context);
+          public purchaseProduct(activity: globalAndroid.app.Activity, product: org.nativescript.plugins.payments.Product, callback: any): void;
           public fetchPurchases(callback: any): void;
           public canMakePayments(): boolean;
           public static isSupported(context: globalAndroid.content.Context): boolean;
-          public purchaseProduct($this$purchaseProduct_u24lambda_u248: globalAndroid.app.Activity, product: org.nativescript.plugins.payments.Product, id: org.nativescript.plugins.payments.Payments.PurchaseOptions): org.nativescript.plugins.payments.Payments.BillingResponse;
-          public getOnPurchaseUpdateListener(): any;
+          public static setEnableDebug(value: boolean): void;
+          public connect(): void;
           public getOnReadyListener(): any;
-          public purchaseProduct(activity: globalAndroid.app.Activity, product: org.nativescript.plugins.payments.Product): org.nativescript.plugins.payments.Payments.BillingResponse;
+          public setOnReadyListener(value: any): void;
+          public getOnPurchaseUpdateListener(): any;
           public setBilling$payments_release(value: com.android.billingclient.api.BillingClient): void;
+          public disconnect(): void;
           public static mapResponseCode$payments_release(code: number): org.nativescript.plugins.payments.Payments.BillingResponse;
         }
         export module Payments {
           export class BillingResponse {
             public static class: java.lang.Class<org.nativescript.plugins.payments.Payments.BillingResponse>;
             public getMessage(): string;
-            public constructor(code: number, message: string, resolution: string);
+            public constructor(code: number, message: string, resolution: string, subCode: number);
             public getCode(): number;
             public getResolution(): string;
+            public getSubCode(): number;
           }
           export class Companion {
             public static class: java.lang.Class<org.nativescript.plugins.payments.Payments.Companion>;
             public isSupported($this$isSupported_u24lambda_u240: globalAndroid.content.Context): boolean;
+            public getEnableDebug(): boolean;
             public mapResponseCode$payments_release(code: number): org.nativescript.plugins.payments.Payments.BillingResponse;
+            public setEnableDebug(value: boolean): void;
           }
           export class Features {
             public static class: java.lang.Class<org.nativescript.plugins.payments.Payments.Features>;
@@ -52,13 +58,32 @@ declare module org {
           }
           export class PurchaseOptions {
             public static class: java.lang.Class<org.nativescript.plugins.payments.Payments.PurchaseOptions>;
+            public getSubscriptionUpdateReplacementMode(): org.nativescript.plugins.payments.Payments.PurchaseOptions.ReplacementMode;
             public constructor();
             public getAccountId(): string;
             public setAccountId(value: string): void;
+            public setSubscriptionUpdateToken(value: string): void;
+            public setSubscriptionUpdateReplacementMode(value: org.nativescript.plugins.payments.Payments.PurchaseOptions.ReplacementMode): void;
+            public getSubscriptionUpdateToken(): string;
             public setProfileId(value: string): void;
             public getProfileId(): string;
             public getSetIsOfferPersonalized(): boolean;
             public setSetIsOfferPersonalized(value: boolean): void;
+          }
+          export module PurchaseOptions {
+            export class ReplacementMode {
+              public static class: java.lang.Class<org.nativescript.plugins.payments.Payments.PurchaseOptions.ReplacementMode>;
+              public static Unknown: org.nativescript.plugins.payments.Payments.PurchaseOptions.ReplacementMode;
+              public static WithTimeProration: org.nativescript.plugins.payments.Payments.PurchaseOptions.ReplacementMode;
+              public static ChargeProratedPrice: org.nativescript.plugins.payments.Payments.PurchaseOptions.ReplacementMode;
+              public static WithoutProration: org.nativescript.plugins.payments.Payments.PurchaseOptions.ReplacementMode;
+              public static ChargeFullPrice: org.nativescript.plugins.payments.Payments.PurchaseOptions.ReplacementMode;
+              public static Deferred: org.nativescript.plugins.payments.Payments.PurchaseOptions.ReplacementMode;
+              public static values(): androidNative.Array<org.nativescript.plugins.payments.Payments.PurchaseOptions.ReplacementMode>;
+              public static valueOf(value: string): org.nativescript.plugins.payments.Payments.PurchaseOptions.ReplacementMode;
+              public static getEntries(): any;
+              public getValue(): number;
+            }
           }
         }
       }
@@ -78,9 +103,9 @@ declare module org {
           public getName(): string;
           public getType(): org.nativescript.plugins.payments.Product.Type;
           public constructor(product: com.android.billingclient.api.ProductDetails);
+          public getPriceAmountMicros(): java.lang.Long;
+          public getPriceFormatted(): string;
           public getDescription(): string;
-          public getPriceAmountMicros(): number | null;
-          public getPriceFormatted(): string | null;
         }
         export module Product {
           export class Type {
@@ -110,24 +135,24 @@ declare module org {
       export module payments {
         export class Transaction {
           public static class: java.lang.Class<org.nativescript.plugins.payments.Transaction>;
-          public getOriginalJson(): org.json.JSONObject;
-          public getProductId(): string;
           public getOrderId(): string;
-          public getOrderDate(): number;
+          public getOriginalJson(): org.json.JSONObject;
           public finish(params: any): void;
+          public isExpired(): boolean;
           public getToken(): string;
+          public isAcknowledged(): boolean;
           public constructor(purchase: com.android.billingclient.api.Purchase, type: org.nativescript.plugins.payments.Product.Type, payments: org.nativescript.plugins.payments.Payments);
           public getQuantity(): number;
-          public isAutoRenewing(): boolean;
+          public getOrderDate(): number;
           public getPurchase(): com.android.billingclient.api.Purchase;
+          public getProductId(): string;
           public getSignature(): string;
           public getType(): org.nativescript.plugins.payments.Product.Type;
+          public isAutoRenewing(): boolean;
           public getState(): org.nativescript.plugins.payments.Transaction.State;
           public getDeveloperPayload(): string;
           public getOriginalJsonString(): string;
           public getProducts(): java.util.List<string>;
-          public isAcknowledged(): boolean;
-          public isExpired(): boolean;
         }
         export module Transaction {
           export class State {

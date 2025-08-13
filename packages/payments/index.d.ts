@@ -23,6 +23,10 @@ export class Payment {
   static isSupported(): boolean;
 
   canMakePayments(): boolean;
+
+  connect(): void;
+
+  disconnect(): void;
 }
 
 export class Transaction {

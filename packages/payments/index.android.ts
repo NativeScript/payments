@@ -247,8 +247,12 @@ export class Payment {
     return this.native.canMakePayments();
   }
 
-  restartConnection() {
-    this.native.restartConnection();
+  connect() {
+    this.native.connect();
+  }
+
+  disconnect() {
+    this.native.disconnect();
   }
 
   fetchProducts(productIdentifiers: string[], type: 'subs' | 'inapp') {
@@ -326,13 +330,22 @@ export class Payment {
           }
         }
       }
-      const response = this.native.purchaseProduct(Utils.android.getCurrentActivity(), product.native, opts);
-      const code = response.getCode();
-      if (code === 0) {
-        resolve();
-      } else {
-        reject(new PaymentError(response.getMessage(), response));
-      }
+
+      this.native.purchaseProduct(
+        Utils.android.getCurrentActivity(),
+        product.native,
+        opts,
+        new kotlin.jvm.functions.Function1({
+          invoke(response: org.nativescript.plugins.payments.Payments.BillingResponse): void {
+            const code = response.getCode();
+            if (code === 0) {
+              resolve();
+            } else {
+              reject(new PaymentError(response.getMessage(), response));
+            }
+          },
+        }),
+      );
     });
   }
 }

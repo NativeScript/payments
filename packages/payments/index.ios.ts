@@ -221,8 +221,12 @@ export class Payment {
     return this.native.canMakePayments();
   }
 
-  restartConnection() {
-    // noop
+  connect() {
+    // no-op for iOS
+  }
+
+  disconnect() {
+    // no-op for iOS
   }
 
   fetchProducts(productIdentifiers: string[], type: 'subs' | 'inapp') {
