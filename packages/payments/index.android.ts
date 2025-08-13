@@ -337,11 +337,15 @@ export class Payment {
         opts,
         new kotlin.jvm.functions.Function1({
           invoke(response: org.nativescript.plugins.payments.Payments.BillingResponse): void {
-            const code = response.getCode();
-            if (code === 0) {
-              resolve();
+            if (response) {
+              const code = response.getCode();
+              if (code === 0) {
+                resolve();
+              } else {
+                reject(new PaymentError(response.getMessage(), response));
+              }
             } else {
-              reject(new PaymentError(response.getMessage(), response));
+              resolve();
             }
           },
         }),
