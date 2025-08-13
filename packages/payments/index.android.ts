@@ -183,7 +183,7 @@ export class Product {
   }
 
   get priceAmountMicros(): number | null {
-    return this.native.getPriceAmountMicros();
+    return this.native.getPriceAmountMicros()?.longValue?.() ?? null;
   }
 
   toJSON() {
