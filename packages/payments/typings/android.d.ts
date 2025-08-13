@@ -33,6 +33,7 @@ declare module org {
             public getCode(): number;
             public getResolution(): string;
             public getSubCode(): number;
+            public getRaw(): string;
           }
           export class Companion {
             public static class: java.lang.Class<org.nativescript.plugins.payments.Payments.Companion>;

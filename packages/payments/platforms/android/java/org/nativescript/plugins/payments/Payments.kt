@@ -63,7 +63,45 @@ class Payments(context: Context) {
     val message: String,
     val resolution: String,
     val subCode: Int = Int.MAX_VALUE
-  )
+  ) {
+    val raw: String
+      get() {
+        if (subCode == BillingClient.OnPurchasesUpdatedSubResponseCode.USER_INELIGIBLE) {
+          return "USER_INELIGIBLE"
+        } else if (subCode == BillingClient.OnPurchasesUpdatedSubResponseCode.PAYMENT_DECLINED_DUE_TO_INSUFFICIENT_FUNDS) {
+          return "INSUFFICIENT_FUNDS"
+        }
+
+        return when (code) {
+          BillingClient.BillingResponseCode.OK -> "OK"
+
+          BillingClient.BillingResponseCode.BILLING_UNAVAILABLE -> "NETWORK_ERROR"
+
+          BillingClient.BillingResponseCode.NETWORK_ERROR -> "NETWORK_ERROR"
+
+          BillingClient.BillingResponseCode.USER_CANCELED -> "USER_CANCELED"
+
+          BillingClient.BillingResponseCode.ITEM_UNAVAILABLE -> "ITEM_UNAVAILABLE"
+
+          BillingClient.BillingResponseCode.DEVELOPER_ERROR -> "DEVELOPER_ERROR"
+
+          BillingClient.BillingResponseCode.FEATURE_NOT_SUPPORTED -> "FEATURE_NOT_SUPPORTED"
+
+          BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> "ITEM_ALREADY_OWNED"
+
+          BillingClient.BillingResponseCode.ITEM_NOT_OWNED -> "ITEM_NOT_OWNED"
+
+          BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE -> "SERVICE_UNAVAILABLE"
+
+          BillingClient.BillingResponseCode.SERVICE_DISCONNECTED -> "SERVICE_DISCONNECTED"
+
+          BillingClient.BillingResponseCode.SERVICE_TIMEOUT -> "SERVICE_TIMEOUT"
+
+          BillingClient.BillingResponseCode.ERROR -> "ERROR"
+          else -> "UNSPECIFIED"
+        }
+      }
+  }
 
   enum class Features(val value: String) {
     Subscriptions(BillingClient.FeatureType.SUBSCRIPTIONS),

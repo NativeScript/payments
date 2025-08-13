@@ -9,14 +9,9 @@ export class PaymentError extends Error {
     this.nativeError = nativeError;
   }
 
-  get code(): number {
-    return this.nativeError?.getCode() ?? Number.MAX_SAFE_INTEGER;
+  get code(): string {
+    return this.nativeError.getRaw();
   }
-
-  get subCode(): number {
-    return this.nativeError?.getSubCode() ?? Number.MAX_SAFE_INTEGER;
-  }
-
   get native(): any {
     return this.nativeError;
   }

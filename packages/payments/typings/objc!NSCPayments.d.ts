@@ -33,6 +33,8 @@ declare class NSCPaymentsResponse extends NSObject {
 
   readonly code: NSCPaymentsResponseFailure;
 
+  readonly raw: string;
+
   readonly message: string;
 
   readonly resolution: string;

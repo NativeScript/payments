@@ -8,12 +8,8 @@ export class PaymentError extends Error {
     this.nativeError = nativeError;
   }
 
-  get code(): number {
-    return this.nativeError?.code ?? Number.MAX_SAFE_INTEGER;
-  }
-
-  get subCode(): number {
-    return Number.MAX_SAFE_INTEGER;
+  get code(): string {
+    return this.nativeError.raw ?? 'UNSPECIFIED';
   }
 
   get native(): any {

@@ -1,3 +1,11 @@
+export type FailureTypes = 'DEFERRED_PAYMENT' | 'PURCHASE_NOT_ALLOWED' | 'PRODUCT_UNAVAILABLE' | 'DEVELOPER_USAGE' | 'PRODUCT_ALREADY_OWNED' | 'PRODUCT_NOT_OWNED' | 'USER_CANCELLED' | 'NETWORK_AVAILABILITY' | 'BILLING_AVAILABILITY' | 'UNSPECIFIED' | 'SERVICE_DISCONNECTED' | 'SERVICE_TIMEOUT' | 'SERVICE_UNAVAILABLE' | 'FEATURE_NOT_SUPPORTED' | 'ERROR' | 'USER_INELIGIBLE' | 'INSUFFICIENT_FUNDS';
+
+export class PaymentError extends Error {
+  readonly code: FailureTypes;
+  readonly native: any;
+  readonly resolution: string;
+}
+
 export interface PurchaseOptions {
   accountId?: string;
   android?: {

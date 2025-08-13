@@ -494,6 +494,33 @@ public enum NSCPaymentsResponseFailure: Int32, RawRepresentable {
       return 10
     }
   }
+  
+  var stringValue: String {
+    switch self {
+    case .ProductUnavailable:
+      return "PRODUCT_UNAVAILABLE"
+    case .DeveloperUsage:
+      return "DEVELOPER_USAGE"
+    case .ProductAlreadyOwned:
+      return "PRODUCT_ALREADY_OWNED"
+    case .ProductNotOwned:
+      return "PRODUCT_NOT_OWNED"
+    case .UserCancelled:
+      return "USER_CANCELLED"
+    case .NetworkAvailability:
+      return "NETWORK_AVAILABILITY"
+    case .BillingAvailability:
+      return "BILLING_AVAILABILITY"
+    case .Unspecified:
+      return "UNSPECIFIED"
+    case .PurchaseNotAllowed:
+      return "PURCHASE_NOT_ALLOWED"
+    case .DeferredPayment:
+      return "DEFERRED_PAYMENT"
+    case .Error:
+      return "ERROR"
+    }
+  }
 }
 
 @objc(NSCPaymentsResponse)
@@ -511,6 +538,10 @@ public class NSCPaymentsResponse: NSObject {
     self.code = code
     self.message = message
     self.resolution = resolution
+  }
+  
+  public var raw: String {
+    return code.stringValue
   }
 }
 
