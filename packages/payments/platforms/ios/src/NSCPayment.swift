@@ -225,7 +225,7 @@ public class NSCTransaction: NSObject {
       }
       
       if let revoked = revocationDate {
-        return revoked >= Date()
+        return revoked <= Date()
       }
       return false
     }
@@ -258,7 +258,7 @@ public class NSCTransaction: NSObject {
       }
       
       if let expiration = expirationDate {
-        return expiration >= Date()
+        return expiration <= Date()
       }
       
       return false

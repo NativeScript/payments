@@ -95,8 +95,6 @@ declare class NSCProduct extends NSObject {
 
   readonly productIdentifier: string;
 
-  readonly receiptToken: string;
-
   readonly type: string;
 
   readonly v1: SKProduct;
