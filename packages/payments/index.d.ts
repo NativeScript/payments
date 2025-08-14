@@ -70,6 +70,8 @@ export class Transaction {
 
   readonly isAutoRenewing: boolean;
 
+  readonly version: 'v1' | 'v2' | undefined; // iOS store version;
+
   finish(): Promise<void>;
 }
 
@@ -89,14 +91,4 @@ export class Product {
   readonly priceFormatted: string | null;
 
   readonly priceAmountMicros: number | null;
-}
-
-export class Transaction {
-  native: org.nativescript.plugins.payments.Transaction;
-  readonly json: any;
-  readonly signature: string;
-  readonly quantity: number;
-  readonly orderId: string;
-  readonly state: 'pending' | 'purchased' | 'unknown';
-  finish(): Promise<void>;
 }

@@ -100,6 +100,17 @@ export class Transaction {
     return this.native.revocationDate;
   }
 
+  get version(): 'v1' | 'v2' {
+    switch (this.native.version) {
+      case NSCPaymentsStoreKitVersion.V1:
+        return 'v1';
+      case NSCPaymentsStoreKitVersion.V2:
+        return 'v2';
+      default:
+        return 'v1';
+    }
+  }
+
   finish() {
     return new Promise<void>((resolve, reject) => {
       this.native.finish((response) => {
@@ -127,6 +138,7 @@ export class Transaction {
       expirationDate: this.expirationDate,
       isRevoked: this.isRevoked,
       revocationDate: this.revocationDate,
+      version: this.version,
     };
   }
 }
