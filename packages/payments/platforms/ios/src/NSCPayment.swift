@@ -155,6 +155,7 @@ public class NSCTransaction: NSObject {
     }
   }
   
+  internal var receiptV1: String? = nil
   var receipt: String? {
     get {
       if version == .v2 && version.storeKit2Available {
@@ -162,7 +163,7 @@ public class NSCTransaction: NSObject {
           return String(data:v2!.jsonRepresentation, encoding: .utf8)
         }
       }
-      return nil
+      return receiptV1
     }
   }
   
@@ -302,17 +303,6 @@ public class NSCProduct: NSObject {
   init(product: Any, _ version : NSCPaymentsStoreKitVersion) {
     self.product = product
     self.version = version
-  }
-  
-  public var receiptToken: String? {
-    if let url = Bundle.main.appStoreReceiptURL {
-      do {
-        return try Data(contentsOf: url).base64EncodedString()
-      }catch {
-        return nil
-      }
-    }
-    return nil
   }
   
   @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
@@ -604,6 +594,7 @@ public class NSCPayments: NSObject {
                 let value = NSCTransaction(transaction: transaction, .v1)
                 
                 if let receipt = receipt {
+                  value.receiptV1 = receipt.base64
                   let purchaseInfo = receipt.activeAutoRenewableSubscriptionPurchases
                     .filter({ $0.transactionIdentifier == transaction.transactionIdentifier })
                     .first
@@ -630,6 +621,7 @@ public class NSCPayments: NSObject {
               for transaction in transactions {
                 let value = NSCTransaction(transaction: transaction, .v1)
                 if let receipt = receipt {
+                  value.receiptV1 = receipt.base64
                   let purchaseInfo = receipt.activeAutoRenewableSubscriptionPurchases
                     .filter({ $0.transactionIdentifier == transaction.transactionIdentifier })
                     .first
