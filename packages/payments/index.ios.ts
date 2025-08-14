@@ -196,10 +196,10 @@ export class Payment {
     this.native.transactionUpdateListener = (transaction) => {
       if (this.onPurchaseUpdate) {
         if (transaction.error) {
-          this.onPurchaseUpdate([Transaction.fromNative(transaction)], null);
-        } else {
           const error = NSCPaymentsResponse.alloc().initWithCodeMessageResolution(NSCPaymentsResponseFailure.Error, `Usage error: ${transaction.error.localizedDescription}`, '');
           this.onPurchaseUpdate([], new PaymentError(transaction.error.localizedDescription, error));
+        } else {
+          this.onPurchaseUpdate([Transaction.fromNative(transaction)], null);
         }
       }
     };
