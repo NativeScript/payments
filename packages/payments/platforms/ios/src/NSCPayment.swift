@@ -569,7 +569,19 @@ public class NSCPayments: NSObject {
   internal var previousPurchases: [NSCPaymentsTransaction] = []
   private var emittedUpdate: Set<UInt64> = []
   var alwaysStoreV1Receipt: Bool = false
+  
+  
+  private static func executeInLoop(_ runloop: CFRunLoop?, _ function: @escaping() -> Void){
+    if let runloop = runloop {
+      CFRunLoopPerformBlock(runloop, CFRunLoopMode.defaultMode.rawValue) {
+        function()
+      }
+    }else {
+      function()
+    }
+  }
   public override init() {
+    let runloop = CFRunLoopGetCurrent()
     if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
       version = .v2
       super.init()
@@ -587,7 +599,10 @@ public class NSCPayments: NSObject {
               }catch {}
             }
             
-            self.transactionUpdateListener?(ret)
+            NSCPayments.executeInLoop(runloop, {
+              self.transactionUpdateListener?(ret)
+            })
+            
             break
           case .verified(let transaction):
             if(self.emittedUpdate.contains(transaction.id)){
@@ -601,7 +616,10 @@ public class NSCPayments: NSObject {
                 ret.receiptV1 = receipt.base64
               }catch {}
             }
-            self.transactionUpdateListener?(ret)
+            
+            NSCPayments.executeInLoop(runloop, {
+              self.transactionUpdateListener?(ret)
+            })
             break
           }
         }
@@ -612,9 +630,10 @@ public class NSCPayments: NSObject {
       let instance: SKPaymentTransactionObserver = {
         class TransactionObserver: NSObject, SKPaymentTransactionObserver {
           var payments: NSCPayments
-          
-          init(payments instance : NSCPayments) {
+          var runloop: CFRunLoop?
+          init(payments instance: NSCPayments, runloop runLoop: CFRunLoop?) {
             payments = instance
+            runloop = runLoop
             super.init()
           }
           
@@ -676,7 +695,11 @@ public class NSCPayments: NSObject {
                     }
                   }
                 }
-                payments.transactionUpdateListener?(value)
+                
+                NSCPayments.executeInLoop(runloop, {
+                  self.payments.transactionUpdateListener?(value)
+                })
+                
               }
             }
           }
@@ -685,17 +708,21 @@ public class NSCPayments: NSObject {
           
           func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error) {
             if(payments.isRestoring){
-              for callback in payments.fetchingPurchases {
-                callback(nil,NSCPaymentsResponse(code: .Error, message: "Usage error: \(error.localizedDescription)", resolution: ""))
-              }
+              NSCPayments.executeInLoop(runloop, {
+                for callback in self.payments.fetchingPurchases {
+                  callback(nil,NSCPaymentsResponse(code: .Error, message: "Usage error: \(error.localizedDescription)", resolution: ""))
+                }
+              })
             }
           }
           
           func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
             if(payments.isRestoring){
-              for callback in payments.fetchingPurchases {
-                callback(payments.previousPurchases, nil)
-              }
+              NSCPayments.executeInLoop(runloop, {
+                for callback in self.payments.fetchingPurchases {
+                  callback(self.payments.previousPurchases, nil)
+                }
+              })
               
               payments.fetchingPurchases.removeAll()
               payments.previousPurchases.removeAll()
@@ -720,7 +747,7 @@ public class NSCPayments: NSObject {
             return true
           }
         }
-        return TransactionObserver(payments: self)
+        return TransactionObserver(payments: self, runloop: runloop)
       }()
       SKPaymentQueue.default().add(instance)
       updatesListener = instance
@@ -735,7 +762,13 @@ public class NSCPayments: NSObject {
             if #available(iOS 18.0, *) {
               product.promotedOffer = intent.offer
             }
-            let _ = self.incomingPromotionListener?(product)
+            if let incomingPromotionListener = incomingPromotionListener {
+              NSCPayments.executeInLoop(runloop, {
+                let _ = self.incomingPromotionListener?(product)
+                
+              })
+            }
+            
           }
         } as AnyObject
       }
@@ -760,6 +793,7 @@ public class NSCPayments: NSObject {
     return NSCPayments.isSupported()
   }
   public func fetchProducts(_ identifiers: [String], _ callback: @escaping ([NSCPaymentsProduct], Error?) -> Void) {
+    let runloop = CFRunLoopGetCurrent()
     switch(version){
     case .v1:
       let request = SKProductsRequest(productIdentifiers: Set(identifiers))
@@ -769,27 +803,32 @@ public class NSCPayments: NSObject {
           let callback: ([NSCPaymentsProduct], Error?) -> Void
           let version: NSCPaymentsStoreKitVersion
           let payments: NSCPayments
-          init(_ cb: @escaping ([NSCPaymentsProduct], Error?) -> Void, _ storeVerion: NSCPaymentsStoreKitVersion, _ payment: NSCPayments){
+          let runloop: CFRunLoop?
+          init(_ cb: @escaping ([NSCPaymentsProduct], Error?) -> Void, _ storeVerion: NSCPaymentsStoreKitVersion, _ payment: NSCPayments, _ runLoop: CFRunLoop?){
             version = storeVerion
             callback = cb
             payments = payment
+            runloop = runLoop
             super .init()
             
           }
           
           func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
             let products = response.products.map {
-              
               return NSCPaymentsProduct(product: $0, version)
             }
-            callback( products, nil)
+            NSCPayments.executeInLoop(runloop, {
+              self.callback( products, nil)
+            })
           }
           
           func request(_ request: SKRequest, didFailWithError error: Error) {
-            callback([], error)
+            NSCPayments.executeInLoop(runloop, {
+              self.callback([], error)
+            })
           }
         }
-        return SKProductsRequestDelegateImpl(callback, version, self)
+        return SKProductsRequestDelegateImpl(callback, version, self, runloop)
       }()
       
       request.delegate = delegate
@@ -834,6 +873,7 @@ public class NSCPayments: NSObject {
       SKPaymentQueue.default().add(payment)
       break
     case .v2:
+      let runloop = CFRunLoopGetCurrent()
       Task {
         do {
           if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
@@ -867,9 +907,11 @@ public class NSCPayments: NSObject {
             case .success(let success):
               switch(success){
               case .unverified(_, let verificationError):
-                callback(
-                  NSCPaymentsResponse(code: .Error, message: "Usage error: \(verificationError.localizedDescription)", resolution: "")
-                )
+                NSCPayments.executeInLoop(runloop) {
+                  callback(
+                    NSCPaymentsResponse(code: .Error, message: "Usage error: \(verificationError.localizedDescription)", resolution: "")
+                  )
+                }
                 break
               case .verified(let transaction):
                 callback(nil)
@@ -883,22 +925,30 @@ public class NSCPayments: NSObject {
                 }
                 
                 self.emittedUpdate.insert(transaction.id)
-                transactionUpdateListener?(ret)
+                NSCPayments.executeInLoop(runloop) {
+                  self.transactionUpdateListener?(ret)
+                }
                 break
               }
             case .userCancelled:
-              callback(NSCPaymentsResponse(code: .UserCancelled, message: "Indicates that the user cancelled a payment request.", resolution: ""))
+              NSCPayments.executeInLoop(runloop) {
+                callback(NSCPaymentsResponse(code: .UserCancelled, message: "Indicates that the user cancelled a payment request.", resolution: ""))
+              }
               break
             case .pending:
-              callback(NSCPaymentsResponse(code: .DeferredPayment, message: "Indicated that is in the queue, but its final status is pending external action such as Ask to Buy.", resolution: ""))
+              NSCPayments.executeInLoop(runloop) {
+                callback(NSCPaymentsResponse(code: .DeferredPayment, message: "Indicated that is in the queue, but its final status is pending external action such as Ask to Buy.", resolution: ""))
+              }
               break
               
             }
           }
         }catch {
-          callback(
-            NSCPaymentsResponse(code: .Error, message: "Usage error: \(error.localizedDescription)", resolution: "")
-          )
+          NSCPayments.executeInLoop(runloop) {
+            callback(
+              NSCPaymentsResponse(code: .Error, message: "Usage error: \(error.localizedDescription)", resolution: "")
+            )
+          }
         }
       }
       break
@@ -909,6 +959,7 @@ public class NSCPayments: NSObject {
   // return error + transaction ?
   public func fetchPurchases(_ callback: @escaping ([NSCPaymentsTransaction]?, NSCPaymentsResponse?) -> Void){
     if(version == .v2 && version.storeKit2Available){
+      let runloop = CFRunLoopGetCurrent()
       if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *){
         Task(priority: .background) {
           do {
@@ -918,7 +969,9 @@ public class NSCPayments: NSObject {
             for await transaction in Transaction.currentEntitlements {
               switch transaction {
               case .unverified(_, let error):
-                callback(nil,NSCPaymentsResponse(code: .Error, message: "Usage error: \(error.localizedDescription)", resolution: ""))
+                NSCPayments.executeInLoop(runloop) {
+                  callback(nil,NSCPaymentsResponse(code: .Error, message: "Usage error: \(error.localizedDescription)", resolution: ""))
+                }
                 hasError = true
                 return
               case .verified(let transaction):
@@ -931,19 +984,23 @@ public class NSCPayments: NSObject {
                     restored.receiptV1 = receipt.base64
                   }catch {}
                 }
-
+                
                 purchases.append(restored)
                 break
               }
             }
             
             if(!hasError){
-              callback(purchases, nil)
+              NSCPayments.executeInLoop(runloop) {
+                callback(purchases, nil)
+              }
             }
             
           }catch {
-            callback(nil, NSCPaymentsResponse(code: .Error, message: "Usage error: \(error.localizedDescription)", resolution: "")
-            )
+            NSCPayments.executeInLoop(runloop) {
+              callback(nil, NSCPaymentsResponse(code: .Error, message: "Usage error: \(error.localizedDescription)", resolution: "")
+              )
+            }
           }
         }
       }
@@ -971,16 +1028,18 @@ public class NSCPayments: NSObject {
           if let id = subscriptionGroupID {
             if #available(iOS 17.0, *) {
               try await AppStore.showManageSubscriptions(in: scene, subscriptionGroupID: id)
+              callback(nil)
             } else {
               try await AppStore.showManageSubscriptions(in: scene)
+              callback(nil)
             }
           }else {
             try await AppStore.showManageSubscriptions(in: scene)
+            callback(nil)
           }
         }else {
           callback("Invalid view controller")
         }
-        
       }
     }else {
       UIApplication.shared.open(URL(string: "https://apps.apple.com/account/subscriptions")!, options: [:]) {_ in
