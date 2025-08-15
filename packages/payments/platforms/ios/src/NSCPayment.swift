@@ -874,6 +874,14 @@ public class NSCPayments: NSObject {
               case .verified(let transaction):
                 callback(nil)
                 let ret = NSCPaymentsTransaction(transaction: transaction, .v2)
+                
+                if(self.alwaysStoreV1Receipt){
+                  do {
+                    let receipt = try InAppReceipt.localReceipt()
+                    ret.receiptV1 = receipt.base64
+                  }catch {}
+                }
+                
                 self.emittedUpdate.insert(transaction.id)
                 transactionUpdateListener?(ret)
                 break
