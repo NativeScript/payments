@@ -838,11 +838,7 @@ public class NSCPayments: NSObject {
             
             var result: Product.PurchaseResult
             if #available(iOS 18.2, *) {
-              if let scene = await confirmIn.view.window?.windowScene {
-                result = try await product.v2!.purchase(confirmIn: scene, options: opts)
-              }else {
-                result = try await product.v2!.purchase(options: opts)
-              }
+              result = try await product.v2!.purchase(confirmIn: confirmIn, options: opts)
             }else {
               result = try await product.v2!.purchase(options: opts)
             }
@@ -898,7 +894,9 @@ public class NSCPayments: NSObject {
                 hasError = true
                 return
               case .verified(let transaction):
-                purchases.append(NSCPaymentsTransaction(transaction: transaction, .v2))
+                let restored = NSCPaymentsTransaction(transaction: transaction, .v2)
+                restored.isAcknowledged = true
+                purchases.append(restored)
                 break
               }
             }
