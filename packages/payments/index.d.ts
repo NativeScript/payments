@@ -31,6 +31,8 @@ export class Payment {
 
   static isSupported(): boolean;
 
+  forceStoreV1Receipt: boolean; // iOS only allows forcing the use of V1 receipts
+
   canMakePayments(): boolean;
 
   connect(): void;

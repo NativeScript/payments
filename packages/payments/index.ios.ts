@@ -234,6 +234,14 @@ export class Payment {
     return NSCPayments.isSupported();
   }
 
+  get forceStoreV1Receipt(): boolean {
+    return this.native.alwaysStoreV1Receipt;
+  }
+
+  set forceStoreV1Receipt(value: boolean) {
+    this.native.alwaysStoreV1Receipt = value;
+  }
+
   canMakePayments(): boolean {
     return this.native.canMakePayments();
   }

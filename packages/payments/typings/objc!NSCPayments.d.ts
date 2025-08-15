@@ -9,6 +9,8 @@ declare class NSCPayments extends NSObject {
 
   incomingPromotionListener: (p1: NSCPaymentsProduct) => boolean;
 
+  alwaysStoreV1Receipt: boolean;
+
   isRestoring: boolean;
 
   pendingTasks: NSArray<any>;
