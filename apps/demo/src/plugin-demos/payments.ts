@@ -95,7 +95,7 @@ export class DemoModel extends Observable {
           if (transaction.state === 'pending') {
             transaction.finish();
           } else if (transaction.state === 'purchased') {
-            console.log(`🟢 Purchase Update: ${JSON.stringify(transaction.json)} 🟢`);
+            console.log(`🟢 Purchase Update: ${JSON.stringify(transaction.receiptToken)} 🟢`);
           }
         });
       }

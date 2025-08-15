@@ -5,13 +5,19 @@ declare class NSCPayments extends NSObject {
 
   static new(): NSCPayments; // inherited from NSObject
 
+  static showManageSubscriptions(showIn: UIViewController, subscriptionGroupID: string, callback: (p1: string) => void): void;
+
+  incomingPromotionListener: (p1: NSCPaymentsProduct) => boolean;
+
   isRestoring: boolean;
 
   pendingTasks: NSArray<any>;
 
-  previousPurchases: NSArray<NSCTransaction>;
+  previousPurchases: NSArray<NSCPaymentsTransaction>;
 
-  transactionUpdateListener: (p1: NSCTransaction) => void;
+  promotionListener: any;
+
+  transactionUpdateListener: (p1: NSCPaymentsTransaction) => void;
 
   updatesListener: any;
 
@@ -19,11 +25,63 @@ declare class NSCPayments extends NSObject {
 
   canMakePayments(): boolean;
 
-  fetchProducts(identifiers: NSArray<string> | string[], callback: (p1: NSArray<NSCProduct>, p2: NSError) => void): void;
+  fetchProducts(identifiers: NSArray<string> | string[], callback: (p1: NSArray<NSCPaymentsProduct>, p2: NSError) => void): void;
 
-  fetchPurchases(callback: (p1: NSArray<NSCTransaction>, p2: NSCPaymentsResponse) => void): void;
+  fetchPurchases(callback: (p1: NSArray<NSCPaymentsTransaction>, p2: NSCPaymentsResponse) => void): void;
 
-  purchaseProduct(product: NSCProduct, confirmIn: UIViewController, options: NSCPurchaseOptions, callback: (p1: NSCPaymentsResponse) => void): void;
+  purchaseProduct(product: NSCPaymentsProduct, confirmIn: UIViewController, options: NSCPaymentsPurchaseOptions, callback: (p1: NSCPaymentsResponse) => void): void;
+}
+
+declare class NSCPaymentsProduct extends NSObject {
+  static alloc(): NSCPaymentsProduct; // inherited from NSObject
+
+  static new(): NSCPaymentsProduct; // inherited from NSObject
+
+  readonly displayName: string;
+
+  readonly id: string;
+
+  readonly isFamilyShareable: boolean;
+
+  isPromoted: boolean;
+
+  readonly price: number;
+
+  readonly priceCurrencyCode: string;
+
+  readonly priceFormatted: string;
+
+  readonly product: any;
+
+  readonly productIdentifier: string;
+
+  promotedOffer: any;
+
+  promotedPayment: SKPayment;
+
+  readonly type: string;
+
+  readonly v1: SKProduct;
+
+  readonly version: NSCPaymentsStoreKitVersion;
+
+  constructor(o: { product: any });
+
+  initWithProduct(product: any, version: NSCPaymentsStoreKitVersion): this;
+}
+
+declare class NSCPaymentsPurchaseOptions extends NSObject {
+  static alloc(): NSCPaymentsPurchaseOptions; // inherited from NSObject
+
+  static new(): NSCPaymentsPurchaseOptions; // inherited from NSObject
+
+  accountId: string;
+
+  accountUUID: NSUUID;
+
+  quantity: number;
+
+  simulatesAskToBuyInSandbox: boolean;
 }
 
 declare class NSCPaymentsResponse extends NSObject {
@@ -33,9 +91,9 @@ declare class NSCPaymentsResponse extends NSObject {
 
   readonly code: NSCPaymentsResponseFailure;
 
-  readonly raw: string;
-
   readonly message: string;
+
+  readonly raw: string;
 
   readonly resolution: string;
 
@@ -74,56 +132,10 @@ declare const enum NSCPaymentsStoreKitVersion {
   V2 = 1,
 }
 
-declare class NSCProduct extends NSObject {
-  static alloc(): NSCProduct; // inherited from NSObject
+declare class NSCPaymentsTransaction extends NSObject {
+  static alloc(): NSCPaymentsTransaction; // inherited from NSObject
 
-  static new(): NSCProduct; // inherited from NSObject
-
-  readonly displayName: string;
-
-  readonly id: string;
-
-  readonly isFamilyShareable: boolean;
-
-  readonly price: number;
-
-  readonly priceCurrencyCode: string;
-
-  readonly priceFormatted: string;
-
-  readonly product: any;
-
-  readonly productIdentifier: string;
-
-  readonly type: string;
-
-  readonly v1: SKProduct;
-
-  readonly version: NSCPaymentsStoreKitVersion;
-
-  constructor(o: { product: any });
-
-  initWithProduct(product: any, version: NSCPaymentsStoreKitVersion): this;
-}
-
-declare class NSCPurchaseOptions extends NSObject {
-  static alloc(): NSCPurchaseOptions; // inherited from NSObject
-
-  static new(): NSCPurchaseOptions; // inherited from NSObject
-
-  accountId: string;
-
-  accountUUID: NSUUID;
-
-  quantity: number;
-
-  simulatesAskToBuyInSandbox: boolean;
-}
-
-declare class NSCTransaction extends NSObject {
-  static alloc(): NSCTransaction; // inherited from NSObject
-
-  static new(): NSCTransaction; // inherited from NSObject
+  static new(): NSCPaymentsTransaction; // inherited from NSObject
 
   readonly error: NSError;
 
@@ -132,6 +144,8 @@ declare class NSCTransaction extends NSObject {
   readonly expirationDate: Date;
 
   expirationDateV1: Date;
+
+  readonly isAcknowledged: boolean;
 
   readonly isExpired: boolean;
 
@@ -147,11 +161,13 @@ declare class NSCTransaction extends NSObject {
 
   readonly receipt: string;
 
+  receiptV1: string;
+
   readonly revocationDate: Date;
 
   revocationDateV1: Date;
 
-  readonly state: NSCTransactionState;
+  readonly state: NSCPaymentsTransactionState;
 
   transaction: any;
 
@@ -168,7 +184,7 @@ declare class NSCTransaction extends NSObject {
   initWithTransaction(transaction: any, version: NSCPaymentsStoreKitVersion): this;
 }
 
-declare const enum NSCTransactionState {
+declare const enum NSCPaymentsTransactionState {
   Unknown = 0,
 
   Purchased = 1,

@@ -46,8 +46,8 @@ public enum NSCPaymentsStoreKitVersion: Int32, RawRepresentable {
 }
 
 
-@objc(NSCTransactionState)
-public enum NSCTransactionState: Int32, RawRepresentable {
+@objc(NSCPaymentsTransactionState)
+public enum NSCPaymentsTransactionState: Int32, RawRepresentable {
   case unknown
   case purchased
   case pending
@@ -80,15 +80,17 @@ public enum NSCTransactionState: Int32, RawRepresentable {
   }
 }
 
-@objc(NSCTransaction)
+@objc(NSCPaymentsTransaction)
 @objcMembers
-public class NSCTransaction: NSObject {
+public class NSCPaymentsTransaction: NSObject {
   public let version: NSCPaymentsStoreKitVersion
   internal var transaction: Any
   init(transaction: Any, _ version : NSCPaymentsStoreKitVersion) {
     self.version = version
     self.transaction = transaction
   }
+  
+  public internal(set) var isAcknowledged: Bool = false
   
   public var orderId: String? {
     if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
@@ -124,7 +126,7 @@ public class NSCTransaction: NSObject {
     }
   }
   
-  var state: NSCTransactionState {
+  var state: NSCPaymentsTransactionState {
     get {
       if(version == .v2 && version.storeKit2Available){
         if #available(iOS 15.0, *) {
@@ -282,6 +284,7 @@ public class NSCTransaction: NSObject {
             case .verified(let t):
               if(t.id == v2!.id){
                 self.transaction = transaction
+                self.isAcknowledged = true
                 callback(nil)
                 break
               }
@@ -291,15 +294,19 @@ public class NSCTransaction: NSObject {
       }
     } else {
       SKPaymentQueue.default().finishTransaction(v1!)
+      isAcknowledged = true
     }
   }
 }
 
-@objc(NSCProduct)
+@objc(NSCPaymentsProduct)
 @objcMembers
-public class NSCProduct: NSObject {
+public class NSCPaymentsProduct: NSObject {
   public let version: NSCPaymentsStoreKitVersion
+  public internal(set) var isPromoted: Bool = false
+  internal var promotedPayment: SKPayment? = nil
   internal let product: Any
+  internal var promotedOffer: Any?
   init(product: Any, _ version : NSCPaymentsStoreKitVersion) {
     self.product = product
     self.version = version
@@ -535,9 +542,9 @@ public class NSCPaymentsResponse: NSObject {
   }
 }
 
-@objc(NSCPurchaseOptions)
+@objc(NSCPaymentsPurchaseOptions)
 @objcMembers
-public class NSCPurchaseOptions: NSObject {
+public class NSCPaymentsPurchaseOptions: NSObject {
   public var accountId: String?
   public var accountUUID: UUID?
   public var quantity: Int = 1
@@ -548,26 +555,33 @@ public class NSCPurchaseOptions: NSObject {
 @objcMembers
 public class NSCPayments: NSObject {
   internal var updatesListener: AnyObject?
+  internal var promotionListener: AnyObject?
   internal var pendingTasks: [AnyObject] = []
   public let version: NSCPaymentsStoreKitVersion
-  public var transactionUpdateListener: ((NSCTransaction) -> Void)?
+  public var transactionUpdateListener: ((NSCPaymentsTransaction) -> Void)?
+  public var incomingPromotionListener: ((NSCPaymentsProduct) -> Bool)?
   internal var isRestoring = false
-  internal var fetchingPurchases: [([NSCTransaction]?, NSCPaymentsResponse?) -> Void] = []
-  internal var previousPurchases: [NSCTransaction] = []
+  internal var fetchingPurchases: [([NSCPaymentsTransaction]?, NSCPaymentsResponse?) -> Void] = []
+  internal var previousPurchases: [NSCPaymentsTransaction] = []
+  private var emittedUpdate: Set<UInt64> = []
   public override init() {
     if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
       version = .v2
       super.init()
-      updatesListener = Task(priority: .background) {
+      updatesListener = Task.detached(priority: .background) {
         for await transaction in Transaction.updates {
           switch transaction {
           case .unverified(let transaction, let error):
-            let ret = NSCTransaction(transaction: transaction, .v2)
+            let ret = NSCPaymentsTransaction(transaction: transaction, .v2)
             ret.errorValue = error
-            transactionUpdateListener?(ret)
+            self.transactionUpdateListener?(ret)
             break
           case .verified(let transaction):
-            transactionUpdateListener?(NSCTransaction(transaction: transaction, .v2))
+            if(self.emittedUpdate.contains(transaction.id)){
+              self.emittedUpdate.remove(transaction.id)
+              continue
+            }
+            self.transactionUpdateListener?(NSCPaymentsTransaction(transaction: transaction, .v2))
             break
           }
         }
@@ -591,8 +605,8 @@ public class NSCPayments: NSObject {
             }catch {}
             if(payments.isRestoring){
               for transaction in transactions where transaction.transactionState == .restored {
-                let value = NSCTransaction(transaction: transaction, .v1)
-                
+                let value = NSCPaymentsTransaction(transaction: transaction, .v1)
+                value.isAcknowledged = true
                 if let receipt = receipt {
                   value.receiptV1 = receipt.base64
                   let purchaseInfo = receipt.activeAutoRenewableSubscriptionPurchases
@@ -619,7 +633,7 @@ public class NSCPayments: NSObject {
               }
             }else {
               for transaction in transactions {
-                let value = NSCTransaction(transaction: transaction, .v1)
+                let value = NSCPaymentsTransaction(transaction: transaction, .v1)
                 if let receipt = receipt {
                   value.receiptV1 = receipt.base64
                   let purchaseInfo = receipt.activeAutoRenewableSubscriptionPurchases
@@ -642,16 +656,12 @@ public class NSCPayments: NSObject {
                     }
                   }
                 }
-                
-                
                 payments.transactionUpdateListener?(value)
               }
             }
           }
           
-          func paymentQueue(_ queue: SKPaymentQueue, removedTransactions transactions: [SKPaymentTransaction]) {
-            
-          }
+          func paymentQueue(_ queue: SKPaymentQueue, removedTransactions transactions: [SKPaymentTransaction]) { }
           
           func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error) {
             if(payments.isRestoring){
@@ -673,7 +683,20 @@ public class NSCPayments: NSObject {
             }
           }
           
-          func paymentQueue(shouldAddStorePayment payment: SKPayment, forTransaction transaction: SKPaymentTransaction) -> Bool {
+          func paymentQueue(_ queue: SKPaymentQueue, shouldAddStorePayment payment: SKPayment, for product: SKProduct) -> Bool {
+            if #available(iOS 16.4, *) {
+              if(payments.version == .v2){
+                return true
+              }
+            }
+            
+            if let listener = payments.incomingPromotionListener {
+              let product = NSCPaymentsProduct(product: product, .v1)
+              product.isPromoted = true
+              product.promotedPayment = payment
+              return listener(product)
+            }
+            
             return true
           }
         }
@@ -681,6 +704,21 @@ public class NSCPayments: NSObject {
       }()
       SKPaymentQueue.default().add(instance)
       updatesListener = instance
+    }
+    
+    if #available(iOS 16.4, *) {
+      if(version == .v2){
+        promotionListener = Task(priority: .background) {
+          for await intent in PurchaseIntent.intents {
+            let product = NSCPaymentsProduct(product: intent.product, .v2)
+            product.isPromoted = true
+            if #available(iOS 18.0, *) {
+              product.promotedOffer = intent.offer
+            }
+            let _ = self.incomingPromotionListener?(product)
+          }
+        } as AnyObject
+      }
     }
     
   }
@@ -701,17 +739,17 @@ public class NSCPayments: NSObject {
   public func canMakePayments() -> Bool {
     return NSCPayments.isSupported()
   }
-  public func fetchProducts(_ identifiers: [String], _ callback: @escaping ([NSCProduct], Error?) -> Void) {
+  public func fetchProducts(_ identifiers: [String], _ callback: @escaping ([NSCPaymentsProduct], Error?) -> Void) {
     switch(version){
     case .v1:
       let request = SKProductsRequest(productIdentifiers: Set(identifiers))
       
       let delegate: SKProductsRequestDelegate =  {
         class SKProductsRequestDelegateImpl: NSObject, SKProductsRequestDelegate {
-          let callback: ([NSCProduct], Error?) -> Void
+          let callback: ([NSCPaymentsProduct], Error?) -> Void
           let version: NSCPaymentsStoreKitVersion
           let payments: NSCPayments
-          init(_ cb: @escaping ([NSCProduct], Error?) -> Void, _ storeVerion: NSCPaymentsStoreKitVersion, _ payment: NSCPayments){
+          init(_ cb: @escaping ([NSCPaymentsProduct], Error?) -> Void, _ storeVerion: NSCPaymentsStoreKitVersion, _ payment: NSCPayments){
             version = storeVerion
             callback = cb
             payments = payment
@@ -722,7 +760,7 @@ public class NSCPayments: NSObject {
           func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
             let products = response.products.map {
               
-              return NSCProduct(product: $0, version)
+              return NSCPaymentsProduct(product: $0, version)
             }
             callback( products, nil)
           }
@@ -744,7 +782,7 @@ public class NSCPayments: NSObject {
           do {
             
             let products = try await Product.products(for: Set(identifiers))
-            let ret = products.map {NSCProduct(product: $0, version)}
+            let ret = products.map {NSCPaymentsProduct(product: $0, version)}
             callback(ret,nil)
           }catch {
             callback([], error)
@@ -755,10 +793,16 @@ public class NSCPayments: NSObject {
     }
   }
   
-  public func purchaseProduct(_ product: NSCProduct, _ confirmIn: UIViewController, _ options: NSCPurchaseOptions?, _ callback: @escaping (NSCPaymentsResponse?)->Void){
+  public func purchaseProduct(_ product: NSCPaymentsProduct, _ confirmIn: UIViewController, _ options: NSCPaymentsPurchaseOptions?, _ callback: @escaping (NSCPaymentsResponse?)->Void){
     switch(version){
     case .v1:
-      let payment = SKMutablePayment(product: product.v1!)
+      
+      let payment = if(product.isPromoted){
+        product.promotedPayment!.mutableCopy() as! SKMutablePayment
+      }else {
+        SKMutablePayment(product: product.v1!)
+      }
+      
       if let options = options {
         if let accountId = options.accountId {
           payment.applicationUsername = accountId
@@ -766,7 +810,6 @@ public class NSCPayments: NSObject {
         payment.quantity = options.quantity
         payment.simulatesAskToBuyInSandbox = options.simulatesAskToBuyInSandbox
       }
-      
       
       SKPaymentQueue.default().add(payment)
       break
@@ -812,8 +855,11 @@ public class NSCPayments: NSObject {
                   NSCPaymentsResponse(code: .Error, message: "Usage error: \(verificationError.localizedDescription)", resolution: "")
                 )
                 break
-              case .verified(_):
+              case .verified(let transaction):
                 callback(nil)
+                let ret = NSCPaymentsTransaction(transaction: transaction, .v2)
+                self.emittedUpdate.insert(transaction.id)
+                transactionUpdateListener?(ret)
                 break
               }
             case .userCancelled:
@@ -837,13 +883,13 @@ public class NSCPayments: NSObject {
   
   
   // return error + transaction ?
-  public func fetchPurchases(_ callback: @escaping ([NSCTransaction]?, NSCPaymentsResponse?) -> Void){
+  public func fetchPurchases(_ callback: @escaping ([NSCPaymentsTransaction]?, NSCPaymentsResponse?) -> Void){
     if(version == .v2 && version.storeKit2Available){
       if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *){
         Task(priority: .background) {
           do {
             try await AppStore.sync()
-            var purchases:  [NSCTransaction] = []
+            var purchases:  [NSCPaymentsTransaction] = []
             var hasError: Bool = false
             for await transaction in Transaction.currentEntitlements {
               switch transaction {
@@ -852,7 +898,7 @@ public class NSCPayments: NSObject {
                 hasError = true
                 return
               case .verified(let transaction):
-                purchases.append(NSCTransaction(transaction: transaction, .v2))
+                purchases.append(NSCPaymentsTransaction(transaction: transaction, .v2))
                 break
               }
             }
@@ -881,6 +927,31 @@ public class NSCPayments: NSObject {
       return AppStore.canMakePayments
     }else {
       return SKPaymentQueue.canMakePayments()
+    }
+  }
+  
+  public static func showManageSubscriptions(_ showIn: UIViewController, _ subscriptionGroupID: String? = nil, _ callback: @escaping (String?) -> Void){
+    if #available(iOS 15.0, *) {
+      Task {
+        if let scene = await showIn.view.window?.windowScene {
+          if let id = subscriptionGroupID {
+            if #available(iOS 17.0, *) {
+              try await AppStore.showManageSubscriptions(in: scene, subscriptionGroupID: id)
+            } else {
+              try await AppStore.showManageSubscriptions(in: scene)
+            }
+          }else {
+            try await AppStore.showManageSubscriptions(in: scene)
+          }
+        }else {
+          callback("Invalid view controller")
+        }
+        
+      }
+    }else {
+      UIApplication.shared.open(URL(string: "https://apps.apple.com/account/subscriptions")!, options: [:]) {_ in
+        callback(nil)
+      }
     }
   }
 }

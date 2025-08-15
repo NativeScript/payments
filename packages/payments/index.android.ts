@@ -250,6 +250,22 @@ export class Payment {
     this.native.disconnect();
   }
 
+  showSubscriptionsManagement(options?: {
+    android?: {
+      packageName?: string;
+      productId?: string;
+    };
+    ios?: {
+      subscriptionGroupID?: string;
+    };
+  }) {
+    return new Promise<void>((resolve, reject) => {
+      const packageName = options?.android?.packageName ?? null;
+      org.nativescript.plugins.payments.Payments.showManageSubscriptions(Utils.android.getCurrentActivity() || Utils.android.getApplicationContext(), packageName, options?.android?.productId ?? null);
+      resolve();
+    });
+  }
+
   fetchProducts(productIdentifiers: string[], type: 'subs' | 'inapp') {
     const items = Array.create(java.lang.String, productIdentifiers.length);
     for (let i = 0; i < productIdentifiers.length; i++) {

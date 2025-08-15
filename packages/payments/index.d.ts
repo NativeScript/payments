@@ -23,6 +23,7 @@ export interface PurchaseOptions {
 export class Payment {
   onReady?: () => void;
   onPurchaseUpdate?: (purchases: Array<Transaction>, error: Error | null) => void;
+  onIncomingPromotion?: (product: Product) => void;
   fetchProducts(itemIds: Array<string>, type: 'inapp' | 'subs'): Promise<Array<Product>>;
   purchaseProduct(product: Product): Promise<void>;
   purchaseProduct(product: Product, options: PurchaseOptions | null | undefined): Promise<void>;
@@ -35,10 +36,21 @@ export class Payment {
   connect(): void;
 
   disconnect(): void;
+
+  showSubscriptionsManagement(options?: {
+    android?: {
+      packageName?: string;
+      productId?: string;
+    };
+    ios?: {
+      subscriptionGroupID?: string;
+    };
+  }): Promise<void>;
+  showSubscriptionsManagement(): Promise<void>;
 }
 
 export class Transaction {
-  readonly native: org.nativescript.plugins.payments.Transaction | NSCTransaction;
+  readonly native: org.nativescript.plugins.payments.Transaction | NSCPaymentsTransaction;
 
   readonly receiptToken: string;
 
@@ -76,7 +88,7 @@ export class Transaction {
 }
 
 export class Product {
-  readonly native: org.nativescript.plugins.payments.Product | NSCProduct;
+  readonly native: org.nativescript.plugins.payments.Product | NSCPaymentsProduct;
 
   readonly id: string;
   readonly name: string;

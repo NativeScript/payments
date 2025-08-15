@@ -29,13 +29,13 @@ export class PaymentError extends Error {
 }
 
 export class Transaction {
-  readonly native: NSCTransaction;
-  constructor(native: NSCTransaction) {
+  readonly native: NSCPaymentsTransaction;
+  constructor(native: NSCPaymentsTransaction) {
     this.native = native;
   }
 
-  static fromNative(native: NSCTransaction): Transaction {
-    if (native instanceof NSCTransaction) {
+  static fromNative(native: NSCPaymentsTransaction): Transaction {
+    if (native instanceof NSCPaymentsTransaction) {
       return new Transaction(native);
     }
     return null;
@@ -66,14 +66,14 @@ export class Transaction {
   }
 
   get isAcknowledged(): boolean {
-    return this.state === 'purchased';
+    return this.native.isAcknowledged;
   }
 
   get state(): 'pending' | 'purchased' | 'unknown' {
     switch (this.native.state) {
-      case NSCTransactionState.Pending:
+      case NSCPaymentsTransactionState.Pending:
         return 'pending';
-      case NSCTransactionState.Purchased:
+      case NSCPaymentsTransactionState.Purchased:
         return 'purchased';
       default:
         return 'unknown';
@@ -144,13 +144,13 @@ export class Transaction {
 }
 
 export class Product {
-  readonly native: NSCProduct;
-  constructor(native: NSCProduct) {
+  readonly native: NSCPaymentsProduct;
+  constructor(native: NSCPaymentsProduct) {
     this.native = native;
   }
 
-  static fromNative(native: NSCProduct): Product {
-    if (native instanceof NSCProduct) {
+  static fromNative(native: NSCPaymentsProduct): Product {
+    if (native instanceof NSCPaymentsProduct) {
       return new Product(native);
     }
     return null;
@@ -203,6 +203,8 @@ export class Payment {
   readonly native: NSCPayments;
   onReady?: () => void;
   onPurchaseUpdate?: (purchases: Array<Transaction>, error: Error | null) => void;
+  onIncomingPromotion?: (product: Product) => void;
+
   constructor() {
     this.native = NSCPayments.new();
     this.native.transactionUpdateListener = (transaction) => {
@@ -214,6 +216,13 @@ export class Payment {
           this.onPurchaseUpdate([Transaction.fromNative(transaction)], null);
         }
       }
+    };
+    this.native.incomingPromotionListener = (product) => {
+      if (this.onIncomingPromotion) {
+        this.onIncomingPromotion(Product.fromNative(product));
+        return true;
+      }
+      return false;
     };
 
     setTimeout(() => {
@@ -235,6 +244,26 @@ export class Payment {
 
   disconnect() {
     // no-op for iOS
+  }
+
+  showSubscriptionsManagement(options?: {
+    android?: {
+      packageName?: string;
+      productId?: string;
+    };
+    ios?: {
+      subscriptionGroupID?: string;
+    };
+  }) {
+    return new Promise<void>((resolve, reject) => {
+      NSCPayments.showManageSubscriptions(Utils.ios.getVisibleViewController(Utils.ios.getRootViewController()), options?.ios?.subscriptionGroupID ?? null, (result) => {
+        if (result) {
+          reject(new Error(result));
+        } else {
+          resolve();
+        }
+      });
+    });
   }
 
   fetchProducts(productIdentifiers: string[], type: 'subs' | 'inapp') {
@@ -282,7 +311,7 @@ export class Payment {
 
   purchaseProduct(product: Product, options?: PurchaseOptions | null | undefined): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      const opts: NSCPurchaseOptions = NSCPurchaseOptions.new();
+      const opts = NSCPaymentsPurchaseOptions.new();
       if (options && typeof options === 'object') {
         if (options.accountId) {
           opts.accountId = options.accountId;

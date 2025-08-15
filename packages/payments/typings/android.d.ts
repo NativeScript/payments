@@ -5,42 +5,48 @@ declare module org {
         export class Payments {
           public static class: java.lang.Class<org.nativescript.plugins.payments.Payments>;
           public showInAppMessaging(activity: globalAndroid.app.Activity): void;
-          public getBilling$payments_release(): com.android.billingclient.api.BillingClient;
           public setOnPurchaseUpdateListener(value: any): void;
           public isFeatureSupported(feature: org.nativescript.plugins.payments.Payments.Features): boolean;
-          public purchaseProduct(it: globalAndroid.app.Activity, product: org.nativescript.plugins.payments.Product, opts: org.nativescript.plugins.payments.Payments.PurchaseOptions, callback: any): void;
+          public static showManageSubscriptions(context: globalAndroid.content.Context, packageName: string): void;
           public static getEnableDebug(): boolean;
-          public fetchProducts(it: androidNative.Array<string>, item$iv$iv: org.nativescript.plugins.payments.Product.Type, $i$f$mapTo: any): void;
-          public constructor(pendingParams: globalAndroid.content.Context);
-          public purchaseProduct(activity: globalAndroid.app.Activity, product: org.nativescript.plugins.payments.Product, callback: any): void;
+          public static showManageSubscriptions(context: globalAndroid.content.Context): void;
           public fetchPurchases(callback: any): void;
           public canMakePayments(): boolean;
-          public static isSupported(context: globalAndroid.content.Context): boolean;
           public static setEnableDebug(value: boolean): void;
           public connect(): void;
-          public getOnReadyListener(): any;
           public setOnReadyListener(value: any): void;
           public getOnPurchaseUpdateListener(): any;
-          public setBilling$payments_release(value: com.android.billingclient.api.BillingClient): void;
           public disconnect(): void;
           public static mapResponseCode$payments_release(code: number): org.nativescript.plugins.payments.Payments.BillingResponse;
+          public getBilling$payments_release(): com.android.billingclient.api.BillingClient;
+          public fetchProducts(it: androidNative.Array<string>, item$iv$iv: org.nativescript.plugins.payments.Product.Type, $i$f$mapTo: any): void;
+          public static showManageSubscriptions(context: globalAndroid.content.Context, packageName: string, productId: string): void;
+          public purchaseProduct(activity: globalAndroid.app.Activity, product: org.nativescript.plugins.payments.Product, callback: any): void;
+          public static isSupported(context: globalAndroid.content.Context): boolean;
+          public getOnReadyListener(): any;
+          public constructor(context: globalAndroid.content.Context);
+          public purchaseProduct(it: globalAndroid.app.Activity, product: org.nativescript.plugins.payments.Product, $this$purchaseProduct_u24lambda_u2422: org.nativescript.plugins.payments.Payments.PurchaseOptions, callback: any): void;
+          public setBilling$payments_release(value: com.android.billingclient.api.BillingClient): void;
         }
         export module Payments {
           export class BillingResponse {
             public static class: java.lang.Class<org.nativescript.plugins.payments.Payments.BillingResponse>;
             public getMessage(): string;
             public constructor(code: number, message: string, resolution: string, subCode: number);
+            public getRaw(): string;
             public getCode(): number;
             public getResolution(): string;
             public getSubCode(): number;
-            public getRaw(): string;
           }
           export class Companion {
             public static class: java.lang.Class<org.nativescript.plugins.payments.Payments.Companion>;
             public isSupported($this$isSupported_u24lambda_u240: globalAndroid.content.Context): boolean;
+            public showManageSubscriptions(context: globalAndroid.content.Context): void;
+            public showManageSubscriptions(id: globalAndroid.content.Context, url: string, uri: string): void;
             public getEnableDebug(): boolean;
             public mapResponseCode$payments_release(code: number): org.nativescript.plugins.payments.Payments.BillingResponse;
             public setEnableDebug(value: boolean): void;
+            public showManageSubscriptions(context: globalAndroid.content.Context, packageName: string): void;
           }
           export class Features {
             public static class: java.lang.Class<org.nativescript.plugins.payments.Payments.Features>;
