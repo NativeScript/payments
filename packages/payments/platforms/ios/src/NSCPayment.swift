@@ -273,32 +273,52 @@ public class NSCPaymentsTransaction: NSObject {
   
   public func finish(_ callback: @escaping (NSCPaymentsResponse?) -> Void) {
     if version == .v2 && version.storeKit2Available {
-      Task {
+      let runloop = CFRunLoopGetCurrent()
+      Task.detached {
         if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
-          await v2!.finish()
+          await self.v2!.finish()
+          var isAcknowledged = false
+          var updateTransaction: Transaction?
+          var hasError: Error?
           for await complete in Transaction.all {
             switch complete {
             case .unverified(let t, let error):
-              if(t.id == v2!.id){
-                self.errorValue = error
-                callback(NSCPaymentsResponse(code: .Error, message: "Usage error: \(error.localizedDescription)", resolution: ""))
-                break
+              if(t.id == self.v2!.id){
+                hasError = error
+                updateTransaction = t
               }
               break
             case .verified(let t):
-              if(t.id == v2!.id){
-                self.transaction = transaction
-                self.isAcknowledged = true
-                callback(nil)
-                break
+              if(t.id == self.v2!.id){
+                updateTransaction = t
+                isAcknowledged = true
               }
+              break
             }
+          }
+          
+          if let error = hasError {
+            self.errorValue = error
+            if let updateTransaction = updateTransaction {
+              self.transaction = updateTransaction
+            }
+            NSCPayments.executeInLoop(runloop) {
+              callback(NSCPaymentsResponse(code: .Error, message: "Usage error: \(error.localizedDescription)", resolution: ""))
+            }
+          }else {
+            self.isAcknowledged = isAcknowledged
+            if let updateTransaction = updateTransaction {
+              self.transaction = updateTransaction
+            }
+            
+            callback(nil)
           }
         }
       }
     } else {
       SKPaymentQueue.default().finishTransaction(v1!)
       isAcknowledged = true
+      callback(nil)
     }
   }
 }
@@ -571,11 +591,12 @@ public class NSCPayments: NSObject {
   var alwaysStoreV1Receipt: Bool = false
   
   
-  private static func executeInLoop(_ runloop: CFRunLoop?, _ function: @escaping() -> Void){
+  fileprivate static func executeInLoop(_ runloop: CFRunLoop?, _ function: @escaping() -> Void){
     if let runloop = runloop {
       CFRunLoopPerformBlock(runloop, CFRunLoopMode.defaultMode.rawValue) {
         function()
       }
+      CFRunLoopWakeUp(runloop)
     }else {
       function()
     }
@@ -585,7 +606,7 @@ public class NSCPayments: NSObject {
     if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
       version = .v2
       super.init()
-      updatesListener = Task.detached(priority: .background) {
+      updatesListener = Task.detached {
         for await transaction in Transaction.updates {
           switch transaction {
           case .unverified(let transaction, let error):
@@ -755,16 +776,16 @@ public class NSCPayments: NSObject {
     
     if #available(iOS 16.4, *) {
       if(version == .v2){
-        promotionListener = Task(priority: .background) {
+        promotionListener = Task.detached(priority: .background) {
           for await intent in PurchaseIntent.intents {
             let product = NSCPaymentsProduct(product: intent.product, .v2)
             product.isPromoted = true
             if #available(iOS 18.0, *) {
               product.promotedOffer = intent.offer
             }
-            if let incomingPromotionListener = incomingPromotionListener {
+            if let incomingPromotionListener = self.incomingPromotionListener {
               NSCPayments.executeInLoop(runloop, {
-                let _ = self.incomingPromotionListener?(product)
+                let _ = incomingPromotionListener(product)
                 
               })
             }
@@ -837,14 +858,17 @@ public class NSCPayments: NSObject {
       break
     case .v2:
       if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
-        Task {
+        Task.detached {
           do {
-            
             let products = try await Product.products(for: Set(identifiers))
-            let ret = products.map {NSCPaymentsProduct(product: $0, version)}
-            callback(ret,nil)
+            let ret = products.map {NSCPaymentsProduct(product: $0, self.version)}
+            NSCPayments.executeInLoop(runloop, {
+              callback(ret,nil)
+            })
           }catch {
-            callback([], error)
+            NSCPayments.executeInLoop(runloop, {
+              callback([], error)
+            })
           }
         }
       }
@@ -853,6 +877,7 @@ public class NSCPayments: NSObject {
   }
   
   public func purchaseProduct(_ product: NSCPaymentsProduct, _ confirmIn: UIViewController, _ options: NSCPaymentsPurchaseOptions?, _ callback: @escaping (NSCPaymentsResponse?)->Void){
+    let runloop = CFRunLoopGetCurrent()
     switch(version){
     case .v1:
       
@@ -873,7 +898,6 @@ public class NSCPayments: NSObject {
       SKPaymentQueue.default().add(payment)
       break
     case .v2:
-      let runloop = CFRunLoopGetCurrent()
       Task {
         do {
           if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
@@ -897,7 +921,15 @@ public class NSCPayments: NSObject {
             }
             
             var result: Product.PurchaseResult
-            if #available(iOS 18.2, *) {
+            
+            
+            if #available(iOS 17.0, *) {
+              if let window = await confirmIn.view.window, let windowScene = await window.windowScene {
+                result = try await product.v2!.purchase(confirmIn: windowScene, options: opts)
+              }else {
+                result = try await product.v2!.purchase(options: opts)
+              }
+            } else if #available(iOS 18.2, *) {
               result = try await product.v2!.purchase(confirmIn: confirmIn, options: opts)
             }else {
               result = try await product.v2!.purchase(options: opts)
@@ -914,7 +946,9 @@ public class NSCPayments: NSObject {
                 }
                 break
               case .verified(let transaction):
-                callback(nil)
+                NSCPayments.executeInLoop(runloop) {
+                  callback(nil)
+                }
                 let ret = NSCPaymentsTransaction(transaction: transaction, .v2)
                 
                 if(self.alwaysStoreV1Receipt){
@@ -961,7 +995,7 @@ public class NSCPayments: NSObject {
     if(version == .v2 && version.storeKit2Available){
       let runloop = CFRunLoopGetCurrent()
       if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *){
-        Task(priority: .background) {
+        Task.detached {
           do {
             try await AppStore.sync()
             var purchases:  [NSCPaymentsTransaction] = []
@@ -1023,22 +1057,31 @@ public class NSCPayments: NSObject {
   
   public static func showManageSubscriptions(_ showIn: UIViewController, _ subscriptionGroupID: String? = nil, _ callback: @escaping (String?) -> Void){
     if #available(iOS 15.0, *) {
+      let runloop = CFRunLoopGetCurrent()
       Task {
         if let scene = await showIn.view.window?.windowScene {
           if let id = subscriptionGroupID {
             if #available(iOS 17.0, *) {
               try await AppStore.showManageSubscriptions(in: scene, subscriptionGroupID: id)
-              callback(nil)
+              NSCPayments.executeInLoop(runloop) {
+                callback(nil)
+              }
             } else {
               try await AppStore.showManageSubscriptions(in: scene)
-              callback(nil)
+              NSCPayments.executeInLoop(runloop) {
+                callback(nil)
+              }
             }
           }else {
             try await AppStore.showManageSubscriptions(in: scene)
-            callback(nil)
+            NSCPayments.executeInLoop(runloop) {
+              callback(nil)
+            }
           }
         }else {
-          callback("Invalid view controller")
+          NSCPayments.executeInLoop(runloop) {
+            callback("Invalid view controller")
+          }
         }
       }
     }else {
