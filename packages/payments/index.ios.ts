@@ -1,339 +1,348 @@
-import { BuyItemOptions, PaymentEvent, _payments$ } from './common';
-import { Failure } from './failure';
-import { Item } from './item';
-import { Order, OrderState } from './order';
+import { Utils } from '@nativescript/core';
+import type { PurchaseOptions } from '.';
 
-export { PaymentEvent, paymentEvents, payments$, toMainThread } from './common';
-export * from './failure';
-export * from './item';
-export * from './order';
+export class PaymentError extends Error {
+  private nativeError: NSCPaymentsResponse;
+  constructor(message: string, nativeError?: any) {
+    super(message);
+    this.nativeError = nativeError;
+  }
 
-let _productRequest: SKProductsRequest | null;
-let _productRequestDelegate: SKProductRequestDelegateImpl | null;
-let _paymentTransactionObserver: SKPaymentTransactionObserverImpl | null;
+  get code(): string {
+    return this.nativeError.raw ?? 'UNSPECIFIED';
+  }
 
-export function init(): void {
-  if (!_paymentTransactionObserver) {
-    _payments$.next({
-      context: PaymentEvent.Context.CONNECTING_STORE,
-      result: PaymentEvent.Result.STARTED,
-      payload: null,
-    });
-    _paymentTransactionObserver = new SKPaymentTransactionObserverImpl();
-    _payments$.next({
-      context: PaymentEvent.Context.CONNECTING_STORE,
-      result: PaymentEvent.Result.PENDING,
-      payload: null,
-    });
-    try {
-      SKPaymentQueue.defaultQueue().addTransactionObserver(_paymentTransactionObserver);
-      _payments$.next({
-        context: PaymentEvent.Context.CONNECTING_STORE,
-        result: PaymentEvent.Result.SUCCESS,
-        payload: null,
-      });
-    } catch (e) {
-      const errorPayload = typeof e === 'object' ? e.message : e;
-      console.error(new Error(`Init failed: ${errorPayload}`));
-      _payments$.next({
-        context: PaymentEvent.Context.CONNECTING_STORE,
-        result: PaymentEvent.Result.FAILURE,
-        payload: new Failure(null),
-      });
+  get native(): any {
+    return this.nativeError;
+  }
+
+  private _resolution: string;
+  get resolution(): string {
+    if (this._resolution) {
+      return this._resolution;
+    }
+    if (this.nativeError && this.nativeError.resolution) {
+      this._resolution = this.nativeError.resolution;
+    }
+    return this._resolution ?? '';
+  }
+}
+
+export class Transaction {
+  readonly native: NSCPaymentsTransaction;
+  constructor(native: NSCPaymentsTransaction) {
+    this.native = native;
+  }
+
+  static fromNative(native: NSCPaymentsTransaction): Transaction {
+    if (native instanceof NSCPaymentsTransaction) {
+      return new Transaction(native);
+    }
+    return null;
+  }
+
+  get receiptToken(): string {
+    return this.native.receipt;
+  }
+
+  get signature(): string {
+    return '';
+  }
+
+  get quantity(): number {
+    return 1;
+  }
+
+  get orderId(): string {
+    return this.native.orderId;
+  }
+
+  get productId(): string {
+    return this.native.productId;
+  }
+
+  get orderDate(): Date {
+    return this.native.orderDate;
+  }
+
+  get isAcknowledged(): boolean {
+    return this.native.isAcknowledged;
+  }
+
+  get state(): 'pending' | 'purchased' | 'unknown' {
+    switch (this.native.state) {
+      case NSCPaymentsTransactionState.Pending:
+        return 'pending';
+      case NSCPaymentsTransactionState.Purchased:
+        return 'purchased';
+      default:
+        return 'unknown';
     }
   }
-}
 
-export function tearDown(): void {
-  if (_paymentTransactionObserver) {
-    SKPaymentQueue.defaultQueue().removeTransactionObserver(_paymentTransactionObserver);
+  get type(): 'inapp' | 'subs`' | 'unknown' {
+    return this.native.type as never;
   }
-  _paymentTransactionObserver = null;
-}
 
-export function fetchSubscriptions(itemIds: Array<string>): void {
-  fetchItems(itemIds);
-}
+  get isExpired(): boolean {
+    return this.native.isExpired;
+  }
 
-export function fetchItems(itemIds: Array<string>): void {
-  _payments$.next({
-    context: PaymentEvent.Context.RETRIEVING_ITEMS,
-    result: PaymentEvent.Result.STARTED,
-    payload: itemIds,
-  });
-  const productIds: NSMutableSet<string> = NSMutableSet.alloc<string>().init();
-  itemIds.forEach((value: string) => productIds.addObject(value));
-  _productRequest = SKProductsRequest.alloc().initWithProductIdentifiers(productIds);
-  _productRequestDelegate = new SKProductRequestDelegateImpl();
-  _productRequest.delegate = _productRequestDelegate;
-  _productRequest.start();
-  _payments$.next({
-    context: PaymentEvent.Context.RETRIEVING_ITEMS,
-    result: PaymentEvent.Result.PENDING,
-    payload: itemIds,
-  });
-}
+  get expirationDate(): Date {
+    return this.native.expirationDate;
+  }
 
-export function startSubscription(item: Item, options?: BuyItemOptions): void {
-  buyItem(item, options);
-}
+  get isRevoked(): boolean {
+    return this.native.isRevoked;
+  }
 
-export function buyItem(item: Item, buyItemOptions: BuyItemOptions): void {
-  if (SKPaymentQueue.defaultQueue().transactions) {
-    const pendingCount = SKPaymentQueue.defaultQueue().transactions.count;
-    if (!pendingCount) {
-      _payments$.next({
-        context: PaymentEvent.Context.PROCESSING_ORDER,
-        result: PaymentEvent.Result.PENDING,
-        payload: pendingCount + 1,
-      });
-      const payment = SKMutablePayment.paymentWithProduct(<SKProduct>item.nativeValue);
-      if (buyItemOptions) {
-        payment.applicationUsername = buyItemOptions?.accountUserName || '';
-        payment.simulatesAskToBuyInSandbox = buyItemOptions.ios?.simulatesAskToBuyInSandbox || false;
-        payment.quantity = buyItemOptions.ios?.quantity || 1;
-      }
-      try {
-        SKPaymentQueue.defaultQueue().addPayment(payment);
-        _payments$.next({
-          context: PaymentEvent.Context.PROCESSING_ORDER,
-          result: PaymentEvent.Result.STARTED,
-          payload: item,
-        });
-      } catch (e) {
-        const errorPayload = typeof e === 'object' ? e.message : e;
-        console.error(new Error(`Error while adding payment: ${errorPayload}`));
-        _payments$.next({
-          context: PaymentEvent.Context.PROCESSING_ORDER,
-          result: PaymentEvent.Result.FAILURE,
-          payload: new Failure(null),
-        });
-      }
-    } else {
-      _payments$.next({
-        context: PaymentEvent.Context.PROCESSING_ORDER,
-        result: PaymentEvent.Result.PENDING,
-        payload: pendingCount,
-      });
+  get revocationDate(): Date {
+    return this.native.revocationDate;
+  }
+
+  get version(): 'v1' | 'v2' {
+    switch (this.native.version) {
+      case NSCPaymentsStoreKitVersion.V1:
+        return 'v1';
+      case NSCPaymentsStoreKitVersion.V2:
+        return 'v2';
+      default:
+        return 'v1';
     }
-  } else {
-    console.error(new Error('SKPaymentQueue.defaultQueue().transactions missing.'));
   }
-}
 
-export function finalizeOrder(order: Order): void {
-  _payments$.next({
-    context: PaymentEvent.Context.FINALIZING_ORDER,
-    result: PaymentEvent.Result.STARTED,
-    payload: order,
-  });
-  if (order.state === OrderState.VALID && !order.restored) {
-    try {
-      SKPaymentQueue.defaultQueue().finishTransaction(<SKPaymentTransaction>order.nativeValue);
-      _payments$.next({
-        context: PaymentEvent.Context.FINALIZING_ORDER,
-        result: PaymentEvent.Result.PENDING,
-        payload: order,
+  finish() {
+    return new Promise<void>((resolve, reject) => {
+      this.native.finish((response) => {
+        if (response) {
+          reject(new PaymentError(response.message));
+          return;
+        }
+        resolve();
       });
-    } catch (e) {
-      const errorPayload = typeof e === 'object' ? e.message : e;
-      console.error(new Error(`Error while finalizing order: ${errorPayload}`));
-      _payments$.next({
-        context: PaymentEvent.Context.FINALIZING_ORDER,
-        result: PaymentEvent.Result.FAILURE,
-        payload: new Failure(null),
-      });
+    });
+  }
+
+  toJSON() {
+    return {
+      orderId: this.orderId,
+      productId: this.productId,
+      orderDate: this.orderDate,
+      receiptToken: this.receiptToken,
+      signature: this.signature,
+      quantity: this.quantity,
+      state: this.state,
+      isAcknowledged: this.isAcknowledged,
+      type: this.type,
+      isExpired: this.isExpired,
+      expirationDate: this.expirationDate,
+      isRevoked: this.isRevoked,
+      revocationDate: this.revocationDate,
+      version: this.version,
+    };
+  }
+}
+
+export class Product {
+  readonly native: NSCPaymentsProduct;
+  constructor(native: NSCPaymentsProduct) {
+    this.native = native;
+  }
+
+  static fromNative(native: NSCPaymentsProduct): Product {
+    if (native instanceof NSCPaymentsProduct) {
+      return new Product(native);
     }
-  } else {
-    _payments$.next({
-      context: PaymentEvent.Context.FINALIZING_ORDER,
-      result: PaymentEvent.Result.FAILURE,
-      payload: new Failure(999),
-    });
+    return null;
+  }
+
+  get id(): string {
+    return this.native.id;
+  }
+  get name(): string {
+    return this.native.displayName;
+  }
+  get description(): string {
+    return this.native.description;
+  }
+  get title(): string {
+    return this.native.displayName;
+  }
+
+  get localizedTitle(): string {
+    return this.native.displayName;
+  }
+
+  get type(): 'inapp' | 'subs' | 'unknown' {
+    return this.native.type as any;
+  }
+
+  get priceFormatted(): string | null {
+    return this.native.priceFormatted;
+  }
+
+  get priceAmountMicros(): number | null {
+    return this.native.price;
+  }
+
+  toJSON() {
+    return {
+      id: this.id,
+      name: this.name,
+      description: this.description,
+      title: this.title,
+      type: this.type,
+      localizedTitle: this.localizedTitle,
+      priceFormatted: this.priceFormatted,
+      priceAmountMicros: this.priceAmountMicros,
+    };
   }
 }
 
-export function restoreOrders(): void {
-  _payments$.next({
-    context: PaymentEvent.Context.RESTORING_ORDERS,
-    result: PaymentEvent.Result.STARTED,
-    payload: null,
-  });
-  try {
-    SKPaymentQueue.defaultQueue().restoreCompletedTransactions();
-  } catch (e) {
-    const errorPayload = typeof e === 'object' ? e.message : e;
-    console.error(new Error(`Error while restoring order: ${errorPayload}`));
-    _payments$.next({
-      context: PaymentEvent.Context.RESTORING_ORDERS,
-      result: PaymentEvent.Result.FAILURE,
-      payload: new Failure(null),
-    });
-  }
-}
+export class Payment {
+  readonly native: NSCPayments;
+  onReady?: () => void;
+  onPurchaseUpdate?: (purchases: Array<Transaction>, error: Error | null) => void;
+  onIncomingPromotion?: (product: Product) => void;
 
-export function canMakePayments(): boolean {
-  // TODO ?
-  return SKPaymentQueue.canMakePayments();
-}
-
-@NativeClass
-class SKProductRequestDelegateImpl extends NSObject implements SKProductsRequestDelegate {
-  public static ObjCProtocols = [SKProductsRequestDelegate];
-
-  public productsRequestDidReceiveResponse(request: SKProductsRequest, response: SKProductsResponse) {
-    const products: NSArray<SKProduct> = response.products;
-
-    // log the invalid IDs if any
-    if (response.invalidProductIdentifiers.count >= 1) {
-      console.log('Invalid product identifiers: ' + JSON.stringify(response.invalidProductIdentifiers.componentsJoinedByString(', ')));
-    }
-
-    const result: Array<Item> = [];
-    const count = products.count;
-    for (let i = 0; i < count; i++) {
-      result.push(new Item(products.objectAtIndex(i)));
-    }
-
-    _payments$.next({
-      context: PaymentEvent.Context.RETRIEVING_ITEMS,
-      result: PaymentEvent.Result.SUCCESS,
-      payload: result,
-    });
-
-    this._cleanup();
-  }
-
-  public requestDidFailWithError(request: SKRequest, error: NSError) {
-    _payments$.next({
-      context: PaymentEvent.Context.RETRIEVING_ITEMS,
-      result: PaymentEvent.Result.FAILURE,
-      payload: new Failure(error.code),
-    });
-    this._cleanup();
-  }
-
-  private _cleanup() {
-    _productRequestDelegate = null;
-    _productRequest = null;
-  }
-}
-
-@NativeClass
-class SKPaymentTransactionObserverImpl extends NSObject implements SKPaymentTransactionObserver {
-  public static ObjCProtocols = [SKPaymentTransactionObserver];
-
-  public paymentQueueUpdatedTransactions(queue: SKPaymentQueue, transactions: NSArray<SKPaymentTransaction>): void {
-    _transactionHandler(queue, transactions);
-  }
-
-  public paymentQueueRestoreCompletedTransactionsFinished(queue: SKPaymentQueue): void {
-    _payments$.next({
-      context: PaymentEvent.Context.RESTORING_ORDERS,
-      result: PaymentEvent.Result.SUCCESS,
-      payload: null,
-    });
-  }
-
-  public paymentQueueRestoreCompletedTransactionsFailedWithError(queue: SKPaymentQueue, error: NSError): void {
-    _payments$.next({
-      context: PaymentEvent.Context.RESTORING_ORDERS,
-      result: PaymentEvent.Result.FAILURE,
-      payload: new Failure(error.code),
-    });
-  }
-
-  public paymentQueueRemovedTransactions(queue: SKPaymentQueue, transactions: NSArray<SKPaymentTransaction>): void {
-    if (transactions && transactions.count) {
-      for (let i = 0; i < transactions.count; i++) {
-        const transaction: SKPaymentTransaction = transactions.objectAtIndex(i);
-        if (transaction.transactionState === SKPaymentTransactionState.Purchased) {
-          _payments$.next({
-            context: PaymentEvent.Context.FINALIZING_ORDER,
-            result: PaymentEvent.Result.SUCCESS,
-            payload: new Order(transaction),
-          });
+  constructor() {
+    this.native = NSCPayments.new();
+    this.native.transactionUpdateListener = (transaction) => {
+      if (this.onPurchaseUpdate) {
+        if (transaction.error) {
+          const error = NSCPaymentsResponse.alloc().initWithCodeMessageResolution(NSCPaymentsResponseFailure.Error, `Usage error: ${transaction.error.localizedDescription}`, '');
+          this.onPurchaseUpdate([], new PaymentError(transaction.error.localizedDescription, error));
+        } else {
+          this.onPurchaseUpdate([Transaction.fromNative(transaction)], null);
         }
       }
-    }
-    _payments$.next({
-      context: PaymentEvent.Context.PROCESSING_ORDER,
-      result: PaymentEvent.Result.PENDING,
-      payload: queue.transactions ? queue.transactions.count : 0,
+    };
+    this.native.incomingPromotionListener = (product) => {
+      if (this.onIncomingPromotion) {
+        this.onIncomingPromotion(Product.fromNative(product));
+        return true;
+      }
+      return false;
+    };
+
+    setTimeout(() => {
+      this.onReady();
+    }, 100);
+  }
+
+  static isSupported(): boolean {
+    return NSCPayments.isSupported();
+  }
+
+  get forceStoreV1Receipt(): boolean {
+    return this.native.alwaysStoreV1Receipt;
+  }
+
+  set forceStoreV1Receipt(value: boolean) {
+    this.native.alwaysStoreV1Receipt = value;
+  }
+
+  canMakePayments(): boolean {
+    return this.native.canMakePayments();
+  }
+
+  connect() {
+    // no-op for iOS
+  }
+
+  disconnect() {
+    // no-op for iOS
+  }
+
+  showSubscriptionsManagement(options?: {
+    android?: {
+      packageName?: string;
+      productId?: string;
+    };
+    ios?: {
+      subscriptionGroupID?: string;
+    };
+  }) {
+    return new Promise<void>((resolve, reject) => {
+      NSCPayments.showManageSubscriptions(Utils.ios.getVisibleViewController(Utils.ios.getRootViewController()), options?.ios?.subscriptionGroupID ?? null, (result) => {
+        if (result) {
+          reject(new Error(result));
+        } else {
+          resolve();
+        }
+      });
     });
   }
 
-  public paymentQueueShouldAddStorePaymentForProduct(queue: SKPaymentQueue, payment: SKPayment, product: SKProduct): boolean {
-    return true;
-  }
-
-  public paymentQueueUpdatedDownloads(queue: SKPaymentQueue, downloads: NSArray<SKDownload>): void {
-    console.log('paymentQueueUpdatedDownloads called. Not implemented.');
-  }
-}
-
-function _transactionHandler(queue: SKPaymentQueue, transactions: NSArray<SKPaymentTransaction>): void {
-  _payments$.next({
-    context: PaymentEvent.Context.PROCESSING_ORDER,
-    result: PaymentEvent.Result.PENDING,
-    payload: queue.transactions ? queue.transactions.count : 0,
-  });
-  const count = transactions?.count ?? 0;
-  if (count) {
-    for (let i = 0; i < count; i++) {
-      const transaction: SKPaymentTransaction = transactions.objectAtIndex(i);
-
-      switch (transaction.transactionState) {
-        case SKPaymentTransactionState.Purchased:
-          _payments$.next({
-            context: PaymentEvent.Context.PROCESSING_ORDER,
-            result: PaymentEvent.Result.SUCCESS,
-            payload: new Order(transaction),
-          });
-          break;
-        case SKPaymentTransactionState.Failed:
-          _payments$.next({
-            context: PaymentEvent.Context.PROCESSING_ORDER,
-            result: PaymentEvent.Result.FAILURE,
-            payload: new Failure(transaction.error.code),
-          });
-          try {
-            queue.finishTransaction(transaction);
-          } catch (e) {
-            const errorPayload = typeof e === 'object' ? e.message : e;
-            console.error(new Error(`Error while finalizing failed order: ${errorPayload}`));
-          }
-          break;
-        case SKPaymentTransactionState.Restored:
-          _payments$.next({
-            context: PaymentEvent.Context.PROCESSING_ORDER,
-            result: PaymentEvent.Result.SUCCESS,
-            payload: new Order(transaction.originalTransaction, true),
-          });
-          _payments$.next({
-            context: PaymentEvent.Context.RESTORING_ORDERS,
-            result: PaymentEvent.Result.PENDING,
-            payload: new Order(transaction.originalTransaction, true),
-          });
-          try {
-            queue.finishTransaction(transaction);
-          } catch (e) {
-            const errorPayload = typeof e === 'object' ? e.message : e;
-            console.error(new Error(`Error while finalizing restored order: ${errorPayload}`));
-          }
-          break;
-        case SKPaymentTransactionState.Purchasing:
-        case SKPaymentTransactionState.Deferred: // TODO ?
-          break;
-        default:
-          console.error(new Error('Missing or unknown transaction state.'));
-          break;
+  fetchProducts(productIdentifiers: string[], type: 'subs' | 'inapp') {
+    return new Promise<Product[]>((resolve, reject) => {
+      if (type !== 'subs' && type !== 'inapp') {
+        return reject(new Error('Invalid type, must be "subs" or "inapp"'));
       }
-    }
+
+      this.native.fetchProducts(productIdentifiers, (products, error) => {
+        if (error) {
+          const ret = NSCPaymentsResponse.alloc().initWithCodeMessageResolution(NSCPaymentsResponseFailure.Error, `Usage error: ${error.localizedDescription}`, '');
+          return reject(new PaymentError(error.localizedDescription, ret));
+        }
+        const size = products ? products.count : 0;
+        if (!products || size === 0) {
+          return resolve([]);
+        }
+        const productList = [];
+        for (let i = 0; i < size; i++) {
+          productList.push(new Product(products.objectAtIndex(i)));
+        }
+        resolve(productList);
+      });
+    });
   }
-  _payments$.next({
-    context: PaymentEvent.Context.PROCESSING_ORDER,
-    result: PaymentEvent.Result.PENDING,
-    payload: queue.transactions ? queue.transactions.count : 0,
-  });
+
+  fetchPurchases() {
+    return new Promise<Transaction[]>((resolve, reject) => {
+      this.native.fetchPurchases((purchases, error) => {
+        if (error) {
+          return reject(new PaymentError(error.message, error));
+        }
+        const size = purchases ? purchases.count : 0;
+        if (!purchases || size === 0) {
+          return resolve([]);
+        }
+        const productList = [];
+        for (let i = 0; i < size; i++) {
+          productList.push(new Transaction(purchases.objectAtIndex(i)));
+        }
+        resolve(productList);
+      });
+    });
+  }
+
+  purchaseProduct(product: Product, options?: PurchaseOptions | null | undefined): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      const opts = NSCPaymentsPurchaseOptions.new();
+      if (options && typeof options === 'object') {
+        if (options.accountId) {
+          opts.accountId = options.accountId;
+        }
+        if (options.ios && typeof options.ios === 'object') {
+          if ('quantity' in options.ios) {
+            opts.quantity = options.ios.quantity;
+          }
+          if ('simulatesAskToBuyInSandbox' in options.ios) {
+            opts.simulatesAskToBuyInSandbox = options.ios.simulatesAskToBuyInSandbox;
+          }
+
+          if ('accountId' in options.ios && options.ios.accountId instanceof NSUUID) {
+            opts.accountUUID = options.ios.accountId;
+          }
+        }
+      }
+      this.native.purchaseProduct(product.native, Utils.ios.getVisibleViewController(Utils.ios.getRootViewController()), opts, (response) => {
+        if (response) {
+          reject(new PaymentError(response.message, response));
+        }
+        resolve();
+      });
+    });
+  }
 }

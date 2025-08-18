@@ -1,31 +1,108 @@
-import { BuyItemOptions } from './common';
-import { Item } from './item';
-import { Order } from './order';
+export type FailureTypes = 'DEFERRED_PAYMENT' | 'PURCHASE_NOT_ALLOWED' | 'PRODUCT_UNAVAILABLE' | 'DEVELOPER_USAGE' | 'PRODUCT_ALREADY_OWNED' | 'PRODUCT_NOT_OWNED' | 'USER_CANCELLED' | 'NETWORK_AVAILABILITY' | 'BILLING_AVAILABILITY' | 'UNSPECIFIED' | 'SERVICE_DISCONNECTED' | 'SERVICE_TIMEOUT' | 'SERVICE_UNAVAILABLE' | 'FEATURE_NOT_SUPPORTED' | 'ERROR' | 'USER_INELIGIBLE' | 'INSUFFICIENT_FUNDS';
 
-export { BuyItemOptions, PaymentEvent, paymentEvents, payments$ } from './common';
-export * from './failure';
-export * from './item';
-export * from './order';
+export class PaymentError extends Error {
+  readonly code: FailureTypes;
+  readonly native: any;
+  readonly resolution: string;
+}
 
-export declare function init(): void;
+export interface PurchaseOptions {
+  accountId?: string;
+  android?: {
+    accountId?: string;
+    profileId?: string;
+    isOfferPersonalized?: boolean;
+  };
+  ios?: {
+    quantity?: number;
+    simulatesAskToBuyInSandbox?: boolean;
+    accountId?: any /* NSUUID */;
+  };
+}
 
-export declare function tearDown(): void;
+export class Payment {
+  onReady?: () => void;
+  onPurchaseUpdate?: (purchases: Array<Transaction>, error: Error | null) => void;
+  onIncomingPromotion?: (product: Product) => void;
+  fetchProducts(itemIds: Array<string>, type: 'inapp' | 'subs'): Promise<Array<Product>>;
+  purchaseProduct(product: Product): Promise<void>;
+  purchaseProduct(product: Product, options: PurchaseOptions | null | undefined): Promise<void>;
+  fetchPurchases(): Promise<Array<Transaction>>;
 
-export declare function fetchItems(itemIds: Array<string>): void;
+  static isSupported(): boolean;
 
-export declare function buyItem(item: Item, options?: BuyItemOptions): void;
+  forceStoreV1Receipt: boolean; // iOS only allows forcing the use of V1 receipts
 
-export function fetchSubscriptions(itemIds: Array<string>): void;
+  canMakePayments(): boolean;
 
-export function startSubscription(item: Item, options?: BuyItemOptions): void;
+  connect(): void;
 
-export declare function finalizeOrder(order: Order): void;
+  disconnect(): void;
 
-export declare function restoreOrders(skuType?: string): void;
+  showSubscriptionsManagement(options?: {
+    android?: {
+      packageName?: string;
+      productId?: string;
+    };
+    ios?: {
+      subscriptionGroupID?: string;
+    };
+  }): Promise<void>;
+  showSubscriptionsManagement(): Promise<void>;
+}
 
-export declare function canMakePayments(): boolean;
+export class Transaction {
+  readonly native: org.nativescript.plugins.payments.Transaction | NSCPaymentsTransaction;
 
-export function toMainThread();
+  readonly receiptToken: string;
 
-// TODO Manage subscriptions
-// TODO map subscriptions (Android)
+  readonly signature: string;
+
+  readonly quantity: number;
+
+  readonly productId: string;
+
+  readonly orderId: string;
+
+  readonly orderDate: Date;
+
+  readonly state: 'pending' | 'purchased' | 'unknown';
+
+  readonly isAcknowledged: boolean;
+
+  readonly type: 'inapp' | 'subs' | 'unknown';
+
+  readonly isAcknowledged: boolean;
+
+  readonly isExpired: boolean;
+
+  readonly expirationDate: Date;
+
+  readonly isRevoked: boolean;
+
+  readonly revocationDate: Date;
+
+  readonly isAutoRenewing: boolean;
+
+  readonly version: 'v1' | 'v2' | undefined; // iOS store version;
+
+  finish(): Promise<void>;
+}
+
+export class Product {
+  readonly native: org.nativescript.plugins.payments.Product | NSCPaymentsProduct;
+
+  readonly id: string;
+  readonly name: string;
+  readonly description: string;
+
+  readonly title: string;
+
+  readonly localizedTitle: string;
+
+  readonly type: 'inapp' | 'subs' | 'unknown';
+
+  readonly priceFormatted: string | null;
+
+  readonly priceAmountMicros: number | null;
+}
