@@ -1,5 +1,5 @@
 export abstract class BaseOrder {
-  public nativeValue: com.android.billingclient.api.Purchase | com.android.billingclient.api.PurchaseHistoryRecord | SKPaymentTransaction;
+  public nativeValue: com.android.billingclient.api.Purchase | SKPaymentTransaction;
   public abstract readonly debug: string | null;
 
   public state: OrderState;
@@ -15,7 +15,7 @@ export abstract class BaseOrder {
   public acknowledged: boolean;
   public quantity: number;
 
-  constructor(nativeValue: com.android.billingclient.api.Purchase | com.android.billingclient.api.PurchaseHistoryRecord | SKPaymentTransaction, restored: boolean = false) {
+  constructor(nativeValue: com.android.billingclient.api.Purchase | SKPaymentTransaction, restored: boolean = false) {
     this.nativeValue = nativeValue;
     this.restored = restored;
   }
@@ -24,5 +24,5 @@ export abstract class BaseOrder {
 export enum OrderState {
   INVALID = 'INVALID',
   PROVISIONAL = 'PROVISIONAL',
-  VALID = 'VALID'
+  VALID = 'VALID',
 }
