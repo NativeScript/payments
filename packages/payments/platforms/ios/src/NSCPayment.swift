@@ -588,7 +588,7 @@ public class NSCPayments: NSObject {
   internal var fetchingPurchases: [([NSCPaymentsTransaction]?, NSCPaymentsResponse?) -> Void] = []
   internal var previousPurchases: [NSCPaymentsTransaction] = []
   private var emittedUpdate: Set<UInt64> = []
-  var alwaysStoreV1Receipt: Bool = false
+  public var alwaysStoreV1Receipt: Bool = false
   
   
   fileprivate static func executeInLoop(_ runloop: CFRunLoop?, _ function: @escaping() -> Void){
