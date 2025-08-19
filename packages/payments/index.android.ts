@@ -99,9 +99,10 @@ export class Transaction {
     return this.native.isExpired();
   }
 
-  finish() {
+  finish(options?: { consume?: boolean }): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       this.native.finish(
+        options?.consume ?? false,
         new kotlin.jvm.functions.Function1({
           invoke(response): void {
             if (response) {

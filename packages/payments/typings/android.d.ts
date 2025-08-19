@@ -144,7 +144,7 @@ declare module org {
           public static class: java.lang.Class<org.nativescript.plugins.payments.Transaction>;
           public getOrderId(): string;
           public getOriginalJson(): org.json.JSONObject;
-          public finish(params: any): void;
+          public finish(consume: boolean, params: any): void;
           public isExpired(): boolean;
           public getToken(): string;
           public isAcknowledged(): boolean;

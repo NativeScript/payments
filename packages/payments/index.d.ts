@@ -86,7 +86,7 @@ export class Transaction {
 
   readonly version: 'v1' | 'v2' | undefined; // iOS store version;
 
-  finish(): Promise<void>;
+  finish(options?: { consume?: boolean }): Promise<void>;
 }
 
 export class Product {
