@@ -83,12 +83,22 @@ public enum NSCPaymentsTransactionState: Int32, RawRepresentable {
 @objc(NSCPaymentsTransaction)
 @objcMembers
 public class NSCPaymentsTransaction: NSObject {
-  public let version: NSCPaymentsStoreKitVersion
+  internal let version_: NSCPaymentsStoreKitVersion
   internal var transaction: Any
-  init(transaction: Any, _ version : NSCPaymentsStoreKitVersion) {
-    self.version = version
+internal var payments: NSCPayments
+    init(transaction: Any, _ version : NSCPaymentsStoreKitVersion, _ payments: NSCPayments) {
+    self.version_ = version
     self.transaction = transaction
+        self.payments = payments
   }
+    
+    
+public var version: NSCPaymentsStoreKitVersion {
+        if(payments.alwaysStoreV1Receipt){
+            return .v1
+        }
+        return version_
+}
   
   public internal(set) var isAcknowledged: Bool = false
   
@@ -117,7 +127,7 @@ public class NSCPaymentsTransaction: NSObject {
   internal var errorValue: Error? = nil
   var error: Error? {
     get {
-      switch(version){
+      switch(version_){
       case .v1:
         return v1!.error
       case .v2:
@@ -128,7 +138,7 @@ public class NSCPaymentsTransaction: NSObject {
   
   var state: NSCPaymentsTransactionState {
     get {
-      if(version == .v2 && version.storeKit2Available){
+      if(version_ == .v2 && version_.storeKit2Available){
         if #available(iOS 15.0, *) {
           switch v2!.revocationReason {
           case .some:
@@ -160,11 +170,10 @@ public class NSCPaymentsTransaction: NSObject {
   fileprivate var receiptV1: String? = nil
   var receipt: String? {
     get {
-      if version == .v2 && version.storeKit2Available {
-        // always
-        if(receiptV1 != nil){
-          return receiptV1
-        }
+      if version_ == .v2 && version_.storeKit2Available {
+          if(payments.alwaysStoreV1Receipt){
+              return receiptV1
+          }
         if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
           return String(data:v2!.jsonRepresentation, encoding: .utf8)
         }
@@ -175,14 +184,14 @@ public class NSCPaymentsTransaction: NSObject {
   
   @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
   internal var v2: Transaction? {
-    if version.storeKit2Available {
+    if version_.storeKit2Available {
       return transaction as? Transaction
     }
     return nil
   }
   
   internal var v1: SKPaymentTransaction? {
-    if version == .v1 {
+    if version_ == .v1 {
       return transaction as? SKPaymentTransaction
     }
     return nil
@@ -191,7 +200,7 @@ public class NSCPaymentsTransaction: NSObject {
   internal var productType = "unknown"
   public var type: String {
     if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
-      if(version == .v2){
+      if(version_ == .v2){
         switch(v2!.productType){
         case .autoRenewable, .nonRenewable:
           return "sub"
@@ -208,11 +217,11 @@ public class NSCPaymentsTransaction: NSObject {
   
   var revocationDate: Date? {
     get {
-      if version == .v2 && version.storeKit2Available {
+      if version_ == .v2 && version_.storeKit2Available {
         if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
           return v2!.revocationDate
         }
-      }else if version == .v1 {
+      }else if version_ == .v1 {
         return self.revocationDateV1
       }
       return nil
@@ -222,11 +231,11 @@ public class NSCPaymentsTransaction: NSObject {
   var isRevoked: Bool {
     get {
       var revocationDate: Date? = nil
-      if version == .v2 && version.storeKit2Available {
+      if version_ == .v2 && version_.storeKit2Available {
         if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
           revocationDate = v2!.revocationDate
         }
-      }else if version == .v1 {
+      }else if version_ == .v1 {
         revocationDate = self.revocationDateV1
       }
       
@@ -241,11 +250,11 @@ public class NSCPaymentsTransaction: NSObject {
   
   var expirationDate: Date? {
     get {
-      if version == .v2 && version.storeKit2Available {
+      if version_ == .v2 && version_.storeKit2Available {
         if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
           return v2!.expirationDate
         }
-      }else if version == .v1 {
+      }else if version_ == .v1 {
         return self.expirationDateV1
       }
       return nil
@@ -255,7 +264,7 @@ public class NSCPaymentsTransaction: NSObject {
   var isExpired: Bool {
     get {
       var expirationDate: Date? = nil
-      if version == .v2 && version.storeKit2Available {
+      if version_ == .v2 && version_.storeKit2Available {
         if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
           expirationDate = v2!.expirationDate
         }
@@ -272,7 +281,7 @@ public class NSCPaymentsTransaction: NSObject {
   }
   
   public func finish(_ callback: @escaping (NSCPaymentsResponse?) -> Void) {
-    if version == .v2 && version.storeKit2Available {
+    if version_ == .v2 && version_.storeKit2Available {
       let runloop = CFRunLoopGetCurrent()
       Task.detached {
         if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
@@ -326,7 +335,7 @@ public class NSCPaymentsTransaction: NSObject {
 @objc(NSCPaymentsProduct)
 @objcMembers
 public class NSCPaymentsProduct: NSObject {
-  public let version: NSCPaymentsStoreKitVersion
+internal let version: NSCPaymentsStoreKitVersion
   public internal(set) var isPromoted: Bool = false
   internal var promotedPayment: SKPayment? = nil
   internal let product: Any
@@ -335,6 +344,7 @@ public class NSCPaymentsProduct: NSObject {
     self.product = product
     self.version = version
   }
+    
   
   @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
   internal var v2: Product? {
@@ -601,6 +611,42 @@ public class NSCPayments: NSObject {
       function()
     }
   }
+    
+    static var localReceiptQueue: [CheckedContinuation<InAppReceipt, any Error>] = []
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+    private static func getLocalReceipt() async throws -> InAppReceipt {
+        try await withCheckedThrowingContinuation { continuation in
+            do {
+                let receipt = try InAppReceipt.localReceipt()
+                continuation.resume(returning: receipt)
+            } catch {
+            
+                InAppReceipt.refresh { refreshError in
+                    if refreshError != nil {
+                        localReceiptQueue.append(continuation)
+                        return
+                    }
+                    
+                    do {
+                        let receipt = try InAppReceipt.localReceipt()
+                        continuation.resume(returning: receipt)
+                        var removing: [Int] = []
+                        for (i, callback) in localReceiptQueue.enumerated() {
+                            callback.resume(returning: receipt)
+                            removing.append(i)
+                        }
+                        for i in removing {
+                            localReceiptQueue.remove(at: i)
+                        }
+                    } catch {
+                        continuation.resume(throwing: error)
+                    }
+                }
+            }
+        }
+    }
+    
+    
   public override init() {
     let runloop = CFRunLoopGetCurrent()
     if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
@@ -610,12 +656,12 @@ public class NSCPayments: NSObject {
         for await transaction in Transaction.updates {
           switch transaction {
           case .unverified(let transaction, let error):
-            let ret = NSCPaymentsTransaction(transaction: transaction, .v2)
+            let ret = NSCPaymentsTransaction(transaction: transaction, .v2, self)
             ret.errorValue = error
             
             if(self.alwaysStoreV1Receipt){
               do {
-                let receipt = try InAppReceipt.localReceipt()
+                let receipt = try await NSCPayments.getLocalReceipt()
                 ret.receiptV1 = receipt.base64
               }catch {}
             }
@@ -630,10 +676,10 @@ public class NSCPayments: NSObject {
               self.emittedUpdate.remove(transaction.id)
               continue
             }
-            let ret = NSCPaymentsTransaction(transaction: transaction, .v2)
+            let ret = NSCPaymentsTransaction(transaction: transaction, .v2, self)
             if(self.alwaysStoreV1Receipt){
               do {
-                let receipt = try InAppReceipt.localReceipt()
+                let receipt = try await NSCPayments.getLocalReceipt()
                 ret.receiptV1 = receipt.base64
               }catch {}
             }
@@ -665,7 +711,7 @@ public class NSCPayments: NSObject {
             }catch {}
             if(payments.isRestoring){
               for transaction in transactions where transaction.transactionState == .restored {
-                let value = NSCPaymentsTransaction(transaction: transaction, .v1)
+                let value = NSCPaymentsTransaction(transaction: transaction, .v1, payments)
                 value.isAcknowledged = true
                 if let receipt = receipt {
                   value.receiptV1 = receipt.base64
@@ -693,7 +739,7 @@ public class NSCPayments: NSObject {
               }
             }else {
               for transaction in transactions {
-                let value = NSCPaymentsTransaction(transaction: transaction, .v1)
+                let value = NSCPaymentsTransaction(transaction: transaction, .v1, payments)
                 if let receipt = receipt {
                   value.receiptV1 = receipt.base64
                   let purchaseInfo = receipt.activeAutoRenewableSubscriptionPurchases
@@ -786,7 +832,6 @@ public class NSCPayments: NSObject {
             if let incomingPromotionListener = self.incomingPromotionListener {
               NSCPayments.executeInLoop(runloop, {
                 let _ = incomingPromotionListener(product)
-                
               })
             }
             
@@ -949,19 +994,21 @@ public class NSCPayments: NSObject {
                 NSCPayments.executeInLoop(runloop) {
                   callback(nil)
                 }
-                let ret = NSCPaymentsTransaction(transaction: transaction, .v2)
+                let ret = NSCPaymentsTransaction(transaction: transaction, .v2, self)
                 
                 if(self.alwaysStoreV1Receipt){
                   do {
-                    let receipt = try InAppReceipt.localReceipt()
+                    let receipt = try await NSCPayments.getLocalReceipt()
                     ret.receiptV1 = receipt.base64
                   }catch {}
                 }
                 
                 self.emittedUpdate.insert(transaction.id)
-                NSCPayments.executeInLoop(runloop) {
-                  self.transactionUpdateListener?(ret)
-                }
+                  // sleep 100ms
+                  try await Task.sleep(nanoseconds: 100_000_000)
+                  NSCPayments.executeInLoop(runloop) {
+                    self.transactionUpdateListener?(ret)
+                  }
                 break
               }
             case .userCancelled:
@@ -1009,12 +1056,12 @@ public class NSCPayments: NSObject {
                 hasError = true
                 return
               case .verified(let transaction):
-                let restored = NSCPaymentsTransaction(transaction: transaction, .v2)
+                let restored = NSCPaymentsTransaction(transaction: transaction, .v2, self)
                 restored.isAcknowledged = true
                 
                 if(self.alwaysStoreV1Receipt){
                   do {
-                    let receipt = try InAppReceipt.localReceipt()
+                    let receipt = try await NSCPayments.getLocalReceipt()
                     restored.receiptV1 = receipt.base64
                   }catch {}
                 }
