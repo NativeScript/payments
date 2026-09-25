@@ -203,7 +203,7 @@ public var version: NSCPaymentsStoreKitVersion {
       if(version_ == .v2){
         switch(v2!.productType){
         case .autoRenewable, .nonRenewable:
-          return "sub"
+          return "subs"
         default:
           return "inapp"
         }
@@ -320,7 +320,9 @@ public var version: NSCPaymentsStoreKitVersion {
               self.transaction = updateTransaction
             }
             
-            callback(nil)
+            NSCPayments.executeInLoop(runloop) {
+              callback(nil)
+            }
           }
         }
       }
@@ -365,7 +367,7 @@ internal let version: NSCPaymentsStoreKitVersion
     if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *) {
       switch(v2!.type){
       case .autoRenewable, .nonRenewable:
-        return "sub"
+        return "subs"
       default:
         return "inapp"
       }
@@ -373,7 +375,7 @@ internal let version: NSCPaymentsStoreKitVersion
     
     if #available(iOS 11.2, macOS 10.13.2, tvOS 11.2, watchOS 6.2, *){
       if(v1?.subscriptionPeriod != nil){
-        return "sub"
+        return "subs"
       }else {
         return "inapp"
       }
@@ -775,19 +777,25 @@ public class NSCPayments: NSObject {
           
           func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error) {
             if(payments.isRestoring){
+              let callbacks = payments.fetchingPurchases
               NSCPayments.executeInLoop(runloop, {
-                for callback in self.payments.fetchingPurchases {
+                for callback in callbacks {
                   callback(nil,NSCPaymentsResponse(code: .Error, message: "Usage error: \(error.localizedDescription)", resolution: ""))
                 }
               })
+              payments.fetchingPurchases.removeAll()
+              payments.previousPurchases.removeAll()
+              payments.isRestoring = false
             }
           }
           
           func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
             if(payments.isRestoring){
+              let callbacks = payments.fetchingPurchases
+              let purchases = payments.previousPurchases
               NSCPayments.executeInLoop(runloop, {
-                for callback in self.payments.fetchingPurchases {
-                  callback(self.payments.previousPurchases, nil)
+                for callback in callbacks {
+                  callback(purchases, nil)
                 }
               })
               
@@ -1086,10 +1094,11 @@ public class NSCPayments: NSObject {
         }
       }
     }else {
+      fetchingPurchases.append(callback)
       if(isRestoring){
-        fetchingPurchases.append(callback)
         return
       }
+      isRestoring = true
       SKPaymentQueue.default().restoreCompletedTransactions()
     }
   }

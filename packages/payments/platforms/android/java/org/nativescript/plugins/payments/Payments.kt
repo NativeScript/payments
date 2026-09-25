@@ -54,6 +54,7 @@ class Payments(context: Context) {
     class BillingResponse(
         val code: Int, val message: String, val resolution: String, val subCode: Int = Int.MAX_VALUE
     ) {
+        // Values must match the FailureTypes union in index.d.ts
         val raw: String
             get() {
                 if (subCode == BillingClient.OnPurchasesUpdatedSubResponseCode.USER_INELIGIBLE) {
@@ -65,21 +66,21 @@ class Payments(context: Context) {
                 return when (code) {
                     BillingClient.BillingResponseCode.OK -> "OK"
 
-                    BillingClient.BillingResponseCode.BILLING_UNAVAILABLE -> "NETWORK_ERROR"
+                    BillingClient.BillingResponseCode.BILLING_UNAVAILABLE -> "BILLING_AVAILABILITY"
 
-                    BillingClient.BillingResponseCode.NETWORK_ERROR -> "NETWORK_ERROR"
+                    BillingClient.BillingResponseCode.NETWORK_ERROR -> "NETWORK_AVAILABILITY"
 
-                    BillingClient.BillingResponseCode.USER_CANCELED -> "USER_CANCELED"
+                    BillingClient.BillingResponseCode.USER_CANCELED -> "USER_CANCELLED"
 
-                    BillingClient.BillingResponseCode.ITEM_UNAVAILABLE -> "ITEM_UNAVAILABLE"
+                    BillingClient.BillingResponseCode.ITEM_UNAVAILABLE -> "PRODUCT_UNAVAILABLE"
 
-                    BillingClient.BillingResponseCode.DEVELOPER_ERROR -> "DEVELOPER_ERROR"
+                    BillingClient.BillingResponseCode.DEVELOPER_ERROR -> "DEVELOPER_USAGE"
 
                     BillingClient.BillingResponseCode.FEATURE_NOT_SUPPORTED -> "FEATURE_NOT_SUPPORTED"
 
-                    BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> "ITEM_ALREADY_OWNED"
+                    BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> "PRODUCT_ALREADY_OWNED"
 
-                    BillingClient.BillingResponseCode.ITEM_NOT_OWNED -> "ITEM_NOT_OWNED"
+                    BillingClient.BillingResponseCode.ITEM_NOT_OWNED -> "PRODUCT_NOT_OWNED"
 
                     BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE -> "SERVICE_UNAVAILABLE"
 

@@ -9,7 +9,7 @@ export class PaymentError extends Error {
   }
 
   get code(): string {
-    return this.nativeError.raw ?? 'UNSPECIFIED';
+    return this.nativeError?.raw ?? 'UNSPECIFIED';
   }
 
   get native(): any {
@@ -80,7 +80,7 @@ export class Transaction {
     }
   }
 
-  get type(): 'inapp' | 'subs`' | 'unknown' {
+  get type(): 'inapp' | 'subs' | 'unknown' {
     return this.native.type as never;
   }
 
@@ -115,7 +115,7 @@ export class Transaction {
     return new Promise<void>((resolve, reject) => {
       this.native.finish((response) => {
         if (response) {
-          reject(new PaymentError(response.message));
+          reject(new PaymentError(response.message, response));
           return;
         }
         resolve();
@@ -182,7 +182,7 @@ export class Product {
   }
 
   get priceAmountMicros(): number | null {
-    return this.native.price;
+    return Math.round(this.native.price * 1000000);
   }
 
   toJSON() {
@@ -226,7 +226,7 @@ export class Payment {
     };
 
     setTimeout(() => {
-      this.onReady();
+      this.onReady?.();
     }, 100);
   }
 
@@ -266,7 +266,7 @@ export class Payment {
     return new Promise<void>((resolve, reject) => {
       NSCPayments.showManageSubscriptions(Utils.ios.getVisibleViewController(Utils.ios.getRootViewController()), options?.ios?.subscriptionGroupID ?? null, (result) => {
         if (result) {
-          reject(new Error(result));
+          reject(new PaymentError(result));
         } else {
           resolve();
         }

@@ -72,8 +72,6 @@ export class Transaction {
 
   readonly type: 'inapp' | 'subs' | 'unknown';
 
-  readonly isAcknowledged: boolean;
-
   readonly isExpired: boolean;
 
   readonly expirationDate: Date;

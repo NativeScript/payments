@@ -10,7 +10,7 @@ export class PaymentError extends Error {
   }
 
   get code(): string {
-    return this.nativeError.getRaw();
+    return this.nativeError?.getRaw?.() ?? 'UNSPECIFIED';
   }
   get native(): any {
     return this.nativeError;
@@ -106,7 +106,7 @@ export class Transaction {
         new kotlin.jvm.functions.Function1({
           invoke(response): void {
             if (response) {
-              reject(new Error(response.getMessage()));
+              reject(new PaymentError(response.getMessage(), response));
               return;
             }
             resolve();
@@ -283,7 +283,7 @@ export class Payment {
         new kotlin.jvm.functions.Function2({
           invoke(products: java.util.List<org.nativescript.plugins.payments.Product>, error): void {
             if (error) {
-              return reject(new Error(error));
+              return reject(new PaymentError(error.getMessage(), error));
             }
             const size = products ? products.size() : 0;
             if (!products || size === 0) {
@@ -306,7 +306,7 @@ export class Payment {
         new kotlin.jvm.functions.Function2({
           invoke(transactions: java.util.List<org.nativescript.plugins.payments.Transaction>, error): void {
             if (error) {
-              return reject(new Error(error));
+              return reject(new PaymentError(error.getMessage(), error));
             }
             const size = transactions ? transactions.size() : 0;
             if (!transactions || size === 0) {
