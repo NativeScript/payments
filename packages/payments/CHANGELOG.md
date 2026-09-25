@@ -1,3 +1,13 @@
+## 4.0.1 (2026-09-25)
+
+### 🩹 Fixes
+
+- **payments:** align runtime behavior with the 4.x typings ([bd47a8c](https://github.com/NativeScript/payments/commit/bd47a8c))
+
+### ❤️ Thank You
+
+- Nathan Walker
+
 # 4.0.0 (2026-09-24)
 
 ### 🚀 Features
